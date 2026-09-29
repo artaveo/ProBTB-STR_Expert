@@ -199,14 +199,17 @@ def markdown(rep: dict) -> str:
         lines.append(f"- {tf}: events in FULL {t['events_in_full']}, mean entry spread s0 "
                      f"{fmt(t['mean_entry_spread_s0_pips'], 2)} pips, fill rate (R=1) {fmt(t['fill_rate_r1'])}")
     lines += ["", f"Classifications: {rep['classification_counts']}", "",
-              "| Level | TF | Window | R | Events | Fills | Fill rate | Days | Win rate | Mean net R | Total net R | "
-              "Upper95 | p | Holm | s0 pips | Cost R | Long n / mean | Short n / mean | Class |",
-              "|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|"]
+              "| Level | TF | Window | R | Events | Fills | TP | SL | 21:30 close | Gap | Fill rate | Days | Win rate | "
+              "Mean net R | Total net R | Upper95 | p | Holm | s0 pips | Cost R | Long n / mean | Short n / mean | Class |",
+              "|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|"]
     for c in rep["cells"].values():
         lo, sh = c["by_side"]["LONG"], c["by_side"]["SHORT"]
+        ex = c["exit_reasons"]
+        gaps = sum(n for k, n in ex.items() if k.startswith("GAP_"))
         lines.append(
             f"| {c['level']} {LEVEL_NAMES[c['level']]} | {c['tf']} | {c['window']} | {c['r']} | {c['events']} | "
-            f"{c['analysed']} | {fmt(c['fill_rate'])} | {c['independent_days']} | {fmt(c['win_rate'])} | "
+            f"{c['analysed']} | {ex.get('TP', 0)} | {ex.get('SL', 0)} | {ex.get('SESSION_CLOSE', 0)} | {gaps} | "
+            f"{fmt(c['fill_rate'])} | {c['independent_days']} | {fmt(c['win_rate'])} | "
             f"{fmt(c['mean_net_r'])} | {fmt(c['total_net_r'], 2)} | {fmt(c['upper95_mean_net_r'])} | "
             f"{fmt(c['p_value'], 4)} | {'yes' if c['holm_significant'] else 'no'} | {fmt(c['mean_s0_pips'], 2)} | "
             f"{fmt(c['mean_cost_share_r'])} | {lo['analysed']} / {fmt(lo['mean_net_r'])} | "

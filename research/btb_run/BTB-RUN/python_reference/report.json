@@ -1,6 +1,6 @@
 {
   "contract_id": "BTB-STUDY-2026-09-29",
-  "package": "C:\\Users\\zakir_ip1m5wj\\AppData\\Roaming\\MetaQuotes\\Terminal\\Common\\Files\\BTB\\BTB-RUN",
+  "package": "E:\\Trade\\ProBTB-STR_Expert\\research\\btb_run\\BTB-RUN",
   "rules": {
     "min_fills": 100,
     "min_independent_days": 20,
