@@ -2,7 +2,7 @@
 
 Owner repository: `https://github.com/artaveo/ProBTB-STR_Expert` · owner folder `E:\Trade\ProBTB-STR_Expert` · commits go straight to `main` (no branches, no PRs).
 
-Status: **BTB-1, BTB-2 and BTB-3 are COMPLETE** (Step A code 2026-09-29, Step B build and run 2026-09-29; completion records in Section 9, report in `research/btb_run/BTB-RUN/python_reference/report.md`). Nothing beyond BTB-3 is authorized. The owner decides whether to continue.
+Status: **BTB-1, BTB-2 and BTB-3 are COMPLETE** (Step A code 2026-09-29, Step B build and run 2026-09-29; completion records in Section 9, report in `research/btb_run/BTB-RUN/python_reference/report.md`). **Next: PART 2 (BTB-v2, phase BTB-4) is authorized** — see "PART 2" near the end of this file. The same Step A / Step B split applies.
 
 | Step | Who | What |
 |---|---|---|
@@ -473,7 +473,214 @@ Step B, 2026-09-29.
 
 ---
 
+# PART 2 — BTB-v2: departure-then-return entries (owner-approved 2026-09-30)
+
+Part 1 (Sections 1–11) is complete and stays valid. Part 2 **adds** two entry modes on top of the same engine, levels, windows, stops, targets and statistics. Everything in Part 1 applies unless a v2 section changes it explicitly. The Part 1 mode is kept as the baseline `E0`.
+
+## V0. Why v2 (evidence from the Part 1 run)
+
+Analysis of the committed ledgers (`research/btb_run/BTB-RUN`):
+
+- **E0 was not a pullback entry.** 73% of the fills happened within 10 s of the breakout close, 90% within 60 s, and 27% at the placement tick itself. The limit at the breakout close was filled by the noise of the breakout bar, not by a return after a move away. That contradicts the Pro BTB picture: break → move away → return to the breakeven → continuation.
+- **The `MISSED_TP_FIRST` rule removed exactly the textbook case**, where price moves far away first and returns later.
+- **Costs were not the problem.** Commission plus entry spread was about 5% of R (median). The mean **gross** R was already negative (−0.11 / −0.10 / −0.05 for R = 1 / 2 / 3).
+- **An M1 approximation of a "move away ≥ 1 × risk first, then return" rule** was run on the same data. The approximation reproduces E0 within 0.01 R. With the rule:
+  - n = 415 and mean net R = +0.17 / +0.18 / +0.24 for R = 1 / 2 / 3;
+  - positive in both quarters and on both sides;
+  - increasing with the departure distance: +0.18 at 1.0 R, +0.22 at 1.5 R and +0.27 at 2.0 R (all at R = 2);
+  - positive in all 8 level × TF groups.
+
+  This was found **after** looking at the data. It is a hypothesis to be tested exactly and confirmed on the untouched holdout, not a result.
+
+## V1. Sample: design + holdout in one pass
+
+| Part | Range (Broker dates) | Use |
+|---|---|---|
+| DESIGN | 2026-01-01 → 2026-06-30 | Same sample as Part 1. E1 was *suggested* by this sample, so its DESIGN numbers are optimistic by construction |
+| **HOLDOUT** | 2026-07-01 → 2026-09-25 | **Never looked at before.** It is the decisive test for E1 and E2 |
+
+- The tester runs **once** from `2026.01.01` to `2026.09.26` (end exclusive). The XAUUSD ticks for 2026-07..09 are already in the cache (`202607–202609.tkc`).
+- Every ledger row carries `sample = DESIGN|HOLDOUT` by the event's break-candle date.
+- The data audit must be `DATA-PASSED` for the whole range.
+- Section 2 "Holdout — not touched" is superseded for this pass only.
+
+## V2. E1 — departure, then return to the breakeven (owner: "first move away, then come back")
+
+This mode uses the same events (L1–L4, M5/M15), the same P (breakout close), SL (breakout extreme ∓ s0) and TP solve (R = 1, 2, 3), and the same exact-fill rules (5.1), stop rules (5.2), target rules (5.3) and 21:30 rules (3.1) as Part 1. Only the order life changes.
+
+1. **Departure distance** `Dep = D × |P − SL|`, with **D = 1.0 as primary** and D = 1.5 and 2.0 as secondary variants. All three come from the same pass.
+2. **Arming.** After the breakout close, the order is **not** placed until the Bid reaches `P + Dep` (long) or `P − Dep` (short). The arming tick is the placement tick, and `s0` is the spread at that tick. The SL is recomputed from `s0` as in 5.2; the P and TP rules are unchanged.
+3. **Invalidation before arming.** If the long SL trigger (Bid ≤ SL) or the short SL trigger (Ask ≥ SL) happens before arming, the setup ends as `INVALIDATED_BEFORE_ARM`.
+4. **Order life.** Once armed, the limit stays until filled, until the SL trigger (`INVALIDATED_BEFORE_FILL`) or until 21:30 of the break day (`CANCELLED_WINDOW_END`).
+   - The Part 1 rules `MISSED_TP_FIRST` and `EXPIRED_12_BARS` **do not apply** to E1.
+   - Arming after 21:30 is impossible, because the setup ends at 21:30.
+5. **Windows.** As in Part 1, the window is decided by the breakout candle's close (FULL / NY).
+
+## V3. E2 — three legs, spike, three pushes into the breakeven (owner-specified)
+
+This is the owner's second entry, shown on the owner's annotated chart:
+- Leg1 contains the breakout, and the BTB lines sit at that breakout candle.
+- Leg2 and Leg3 make higher highs.
+- A spike comes down from Leg3.
+- The pullback falls in three pushes (1, 2, 3) along a descending trend line.
+- The third push lands on the BTB and is the buy. After it a new Leg1–Leg3 up follows.
+
+The description below is for a **long**; shorts are mirrored exactly (highs ↔ lows, Bid/Ask as in Part 1). All on the signal TF (M5 or M15), with Bid bars, using completed bars only (no look-ahead). ATR = Wilder ATR(14) of the signal TF.
+
+### V3.1 Structure tools (new, `BTB_Swings.mqh`)
+
+**ZigZag pivots (leg structure).** The reversal threshold is `Z = 1.0 × ATR14`, taken at the bar where the reversal is detected.
+- In an up-swing, track the highest high `HH` and its bar.
+- When a completed bar has `low ≤ HH − Z`, the pivot high is confirmed at `HH`:
+  - its **time** is the bar of HH (the first such bar on ties);
+  - its **confirmation time** is the close of the detecting bar.
+- Lows are mirrored.
+- The first pivot of the data is the first bar's low or high, whichever is reversed first.
+- Pivots alternate strictly.
+
+**Fractal pushes (pullback structure).** Use 2/2 fractal lows and highs on the signal TF (the LSR swing definition), confirmed at the close of the second right bar.
+
+### V3.2 Legs (the move away)
+
+1. **Breakout.** The E2 setup starts from a Part 1 `EVENT` (any of L1–L4, long).
+2. **Leg 1** is the ZigZag up-swing that contains the breakout candle: from pivot low `L0` (at or before the breakout bar) to the next pivot high `H1` (at or after it).
+3. **Legs 2..n.** The following pivots `L1, H2, L2, H3, …` must satisfy:
+   - higher highs: `H1 < H2 < H3 < …`;
+   - higher lows: `L1 < L2 < …`;
+   - every `Lk > break_high`: the impulse must not return to the BTB zone while it is being built.
+4. **Leg count.** The setup needs **at least 3 legs**. Its count `n` is recorded; `n = 3` is the owner's case, and `n ≥ 4` is reported separately.
+5. **Failures.** A pivot low that breaks the higher-low rule or touches the zone before 3 legs exist ends the setup as `STRUCTURE_FAILED`.
+
+### V3.3 Spike (after the last leg)
+
+- **Spike definition.** Let `Hn` be the pivot high of the last leg, with ATR taken at the Hn bar. A **spike** exists if, within the **first 3 completed bars after the Hn bar**, the lowest low is ≤ `Hn − 2.0 × ATR14`.
+- **Legs continue.** If price instead makes a new pivot high above Hn that satisfies the leg rules, the leg count increases and the spike is checked after the new last leg.
+- **No spike.** If the ZigZag confirms a pivot low after Hn without a spike (a normal pullback), and no further higher high follows, the setup ends as `NO_SPIKE`.
+
+### V3.4 Three pushes and the trend line
+
+1. **Push 1 and push 2.**
+   - `p1` is the first confirmed fractal low after the Hn bar; it may be the spike low.
+   - `p2` is the next confirmed fractal low with `p2 < p1`, with at least one confirmed fractal high between them.
+   - Both must be **above the zone top** (`p1, p2 > break_high`).
+2. **Rolling pushes.** If a newer fractal low forms below p2 but still above the zone, the pushes roll: `p1 ← p2`, `p2 ← new low`. The number of pushes is recorded.
+3. **Trend line.** The line runs through `(bar(p1), p1)` and `(bar(p2), p2)`. Its slope must be < 0. For bar index `i` after p2: `y(i) = p2 + slope × (i − bar(p2))`.
+4. **Third push = entry.** From the confirmation of p2 onwards:
+   - the Buy Limit at **P** is **live only on bars where `|y(i) − P| ≤ 0.5 × ATR14`** (the line is at the breakeven);
+   - on other bars it is not live;
+   - when `y(i) < P − 0.5 × ATR14`, the line has passed the zone and the setup ends as `LINE_PASSED`.
+
+   The fill follows 5.1 exactly (Ask ≤ P, fill at P). The live-bar test is decided at each bar's open from known values, so there is no look-ahead.
+5. **Invalidation.** A Bid ≤ SL before the fill ends the setup as `INVALIDATED_BEFORE_FILL`.
+
+### V3.5 Stop, target, life and windows
+
+- **Stop and target.** As Part 1: SL = breakout low − s0, where s0 is the spread at the first live tick; TP is solved for R = 1, 2, 3 as in 5.3.
+- **Setup life.** A setup may span several days, up to **3 trading days** after the breakout (`EXPIRED_3_DAYS`). Orders are live only inside the FULL window, and nothing is live in the late-spread block.
+- **Window.** For E2 the window (FULL/NY) is decided by the **fill time**, not by the breakout time.
+- **21:30.** Positions are closed at 21:30 as in 3.1.
+- **One setup per event.** Each event gives at most one E2 setup. Proxies stay independent.
+
+### V3.6 Ledgers
+
+`btb_setups_E2_<TF>.csv` has one row per EVENT that entered E2. It holds only bar-derived fields, so it can be reconciled byte-identically in Python:
+- the event ID and the pivots `L0/H1/L1/H2/L2/H3…` (times and prices), `n_legs`;
+- the spike (bar, low and depth in ATR);
+- `p1/p2` (times, prices), `n_pushes`, the line slope;
+- the first and last live bar;
+- the terminal status: `LIVE_TO_FILL`, `STRUCTURE_FAILED`, `NO_SPIKE`, `LINE_PASSED`, `EXPIRED_3_DAYS`, `INVALIDATED_BEFORE_FILL` or `NO_LEG1`.
+
+The proxy ledger `btb_proxies_<TF>.csv` gains the columns `mode` (E0/E1/E2), `dep_d` (E1), `sample`, `arm_time`, `n_legs` and `n_pushes`.
+
+## V4. Statistics for v2
+
+**Primary cells (pre-registered, 36):**
+- **E0:** pooled over L1–L4, per TF × window × R.
+- **E1 with D = 1.0:** pooled over L1–L4, per TF × window × R.
+- **E2:** pooled over L1–L4, per TF × window × R.
+
+Each mode gives 2 TF × 2 windows × 3 R = 12 cells.
+
+**Diagnostic cells (not decision-making):**
+- per level;
+- E1 with D = 1.5 and 2.0;
+- E2 with n_legs = 3 vs ≥ 4;
+- long vs short;
+- the spread buckets.
+
+**Report per cell and per sample** (DESIGN, HOLDOUT, ALL): all Part 1 columns plus the arming/setup funnel (events → armed/live → filled).
+
+**Verdict rules:**
+
+| Rule | Detail |
+|---|---|
+| DESIGN | Part 1 classification (Section 6), with Holm over the 36 primary cells |
+| **HOLDOUT (decisive)** | A primary cell is `CONFIRMED` if its HOLDOUT one-sided bootstrap p-value passes **Holm over the E1 + E2 primary cells** (24) at α = 0.05 **and** its DESIGN mean net R > 0 |
+| Holdout minimum | `INCONCLUSIVE_LOW_N` uses 30 filled proxies and 10 days on HOLDOUT (3 months), and the Part 1 minima on DESIGN |
+| E0 | Reported as the baseline and never confirmed |
+
+No cell is picked as "best". E2 is expected to be **rare** (possibly a few dozen setups in 9 months). If its HOLDOUT is `INCONCLUSIVE_LOW_N`, the report says so and the owner decides whether to extend the data, for example to 2025.
+
+## V5. Code changes (reuse map)
+
+| File | Change |
+|---|---|
+| `MQL5/Include/ProBTB/BTB_Swings.mqh` | **new**: ZigZag(Z·ATR), 2/2 fractals, leg tracker (V3.1–V3.3), push/trend-line tracker (V3.4) |
+| `MQL5/Include/ProBTB/BTB_Setups.mqh` | **new**: E1 arming state machine (V2), E2 setup state machine (V3), setup ledger writer |
+| `MQL5/Include/ProBTB/BTB_Proxy.mqh` | extend: mode E0/E1/E2, arming, live-bar gating, new states, `sample` column. **E0 output must stay byte-identical to Part 1 on the DESIGN range** (regression check) |
+| `BTB_Types.mqh`, `BTB_Engine.mqh`, `BTB_Expert.mq5` | new enums and inputs: `E1_DepD = {1.0,1.5,2.0}`, `E2_ZigZagATR = 1.0`, `E2_SpikeATR = 2.0`, `E2_SpikeBars = 3`, `E2_LineTolATR = 0.5`, `E2_MaxDays = 3`; one pass for all modes |
+| `BTB_Tests.mq5` | new suites (V6) |
+| `python/btb_reference/swings.py`, `setups.py` | **new**: independent reproduction of pivots, legs, spike, pushes, line, live bars and `btb_setups_E2_<TF>.csv` (**byte-identical**) |
+| `python/btb_reference/study.py` | v2 cells, samples, funnel, Holm on the primary sets, holdout verdict |
+| `docs/BTB_RunCard.md`, `config/btb_tester.ini`, `MQL5/Profiles/Tester/BTB_RUN_V2.set` | ToDate `2026.09.26`, `ExperimentId=BTB-V2`, audit end `2026.09.25` |
+| TRE engine files | **no change** |
+
+## V6. Blocking tests (added to the existing ones)
+
+**MQL5 and Python:**
+- **ZigZag:** pivots on a hand-built bar series, including ties and the exact confirmation bar.
+- **Legs:** the owner's chart as a synthetic series (Leg1 containing a breakout → Leg2 → Leg3 → spike → pushes 1, 2 → third push at P) gives `LIVE_TO_FILL` with n_legs = 3 and n_pushes = 2 before the fill. Variants for each terminal status (`STRUCTURE_FAILED` when a low touches the zone during the legs, `NO_SPIKE`, `LINE_PASSED`, `EXPIRED_3_DAYS`, `INVALIDATED_BEFORE_FILL`).
+- **Trend line:** `y(i)` values and live-bar gating at ±0.5 ATR, both boundaries included.
+- **E1:**
+  - arming exactly at `P + Dep` (Bid = P + Dep arms, 1 point less does not);
+  - `INVALIDATED_BEFORE_ARM`;
+  - no 12-bar expiry;
+  - the 21:30 cancel.
+- **Short mirrors** of the E1 and E2 cases.
+- **E0 regression:** the Part 1 fixtures still pass unchanged.
+
+**Python only:** Holm over 24/36 cells, the holdout verdict and the sample split.
+
+## V7. Phases (same split as Part 1)
+
+**Step A — cloud session (code only; Section 8A applies):**
+- implement V2–V6 and run all Python tests;
+- do not change the TRE files;
+- commit and push to `main`;
+- record `BTB-4 — CODE COMPLETE (not compiled)`;
+- end with **"Step A done — owner: git pull, then start Step B."**
+
+**Step B — Cowork (Section 8B applies):**
+1. Install, compile with 0/0, run `BTB_Tests` and the Python tests.
+2. Run the raw audit for 2026-01-01..2026-09-25, which must be `DATA-PASSED`.
+3. Run the tester **once** with `BTB_RUN_V2.set`.
+4. Check the E0 regression: E0 DESIGN rows equal Part 1 BTB-RUN.
+5. Reconcile the event and setup ledgers byte-identically.
+6. Write the report to `research/btb_v2/`, commit and record `BTB-4 — COMPLETE`.
+7. Tell the owner in Persian:
+   - the primary table (E0/E1/E2 × TF × window × R) with DESIGN and HOLDOUT side by side;
+   - the verdicts;
+   - the E2 funnel;
+   - the E2 setup count.
+
+---
+
 # Roadmap Update Log
+
+## 2026-09-30 — PART 2 (BTB-v2) authorized
+- Diagnosis of Part 1: E0 filled within seconds of the breakout (no real return); `MISSED_TP_FIRST` removed the textbook case; costs about 5% of R; gross already negative.
+- Added E1 (move away ≥ D × risk, then limit at the breakout close; D = 1.0 primary) and E2 (owner's three legs → spike → three pushes along a trend line into the breakeven).
+- One tester pass 2026-01-01 → 2026-09-26; 2026-07..09 is the untouched HOLDOUT and decides.
 
 ## 2026-09-29 — Roadmap created (owner decisions)
 - New strategy, new repository and folder; LSR frozen at its Phase 3 stage.
