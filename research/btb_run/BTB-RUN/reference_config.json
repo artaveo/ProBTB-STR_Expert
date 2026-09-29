@@ -1,0 +1,1 @@
+{"contract_id":"BTB-EVENTS-PROXIES-2026-09-29","symbol":"XAUUSD","digits":2,"point":0.01,"tick_size":0.01,"strategy_pip_size":0.1,"signal_bar_price_source":"BID","m1_bars_file":"bars_M1_BID.csv","session_file":"session_schedule.csv","timeframes":["M5","M15"],"atr_period":14,"quarantine_file":"data_quarantine_windows.csv","declared_quarantine_file":""}

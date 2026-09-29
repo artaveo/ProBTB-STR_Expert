@@ -1,0 +1,4 @@
+BTB_Tests.mq5: Result: 0 errors, 0 warnings, 17241 ms elapsed, cpu='X64 Regular'
+BTB_EventReplay.mq5: Result: 0 errors, 0 warnings, 12873 ms elapsed, cpu='X64 Regular'
+TRE_RawTickAudit.mq5: Result: 0 errors, 0 warnings, 12882 ms elapsed, cpu='X64 Regular'
+BTB_Expert.mq5: Result: 0 errors, 0 warnings, 22267 ms elapsed, cpu='X64 Regular'

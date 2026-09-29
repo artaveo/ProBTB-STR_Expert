@@ -1,0 +1,2193 @@
+{
+  "contract_id": "BTB-STUDY-2026-09-29",
+  "package": "C:\\Users\\zakir_ip1m5wj\\AppData\\Roaming\\MetaQuotes\\Terminal\\Common\\Files\\BTB\\BTB-RUN",
+  "rules": {
+    "min_fills": 100,
+    "min_independent_days": 20,
+    "alpha": 0.05,
+    "multiple_testing": "Holm-Bonferroni over all 48 cells",
+    "bootstrap": {
+      "method": "day-block (broker day of the fill)",
+      "reps": 10000,
+      "seed": 20260929,
+      "p_value": "share of resample means <= 0"
+    },
+    "net_r": "RealizedNetPnL / PlannedRisk1R; 1 lot; exact limit fill at the breakout close; SL beyond the breakout extreme by the live spread; TP solved for k R net",
+    "analysis_set": "filled proxies with a real exit (not END_OF_DATA, not IN_QUARANTINE)"
+  },
+  "cells": {
+    "L1|M5|FULL|R1": {
+      "events": 75,
+      "orders": 75,
+      "fills": 74,
+      "fill_rate": 0.9866666666666667,
+      "analysed": 74,
+      "independent_days": 71,
+      "win_rate": 0.43243243243243246,
+      "mean_net_r": -0.16313371621621622,
+      "total_net_r": -12.071895,
+      "upper95_mean_net_r": 0.016749361111111142,
+      "p_value": 0.929,
+      "mean_s0_pips": 5.85945945945946,
+      "mean_commission_r": 0.007114621621621622,
+      "mean_s0_r": 0.052826256756756756,
+      "states": {
+        "FILLED": 48,
+        "FILLED_AT_PLACEMENT": 26,
+        "MISSED_TP_FIRST": 1
+      },
+      "exit_reasons": {
+        "SESSION_CLOSE": 4,
+        "SL": 41,
+        "TP": 29
+      },
+      "by_side": {
+        "LONG": {
+          "analysed": 28,
+          "mean_net_r": -0.3340941785714286,
+          "win_rate": 0.32142857142857145
+        },
+        "SHORT": {
+          "analysed": 46,
+          "mean_net_r": -0.059070826086956525,
+          "win_rate": 0.5
+        }
+      },
+      "mean_cost_share_r": 0.05994087837837838,
+      "level": "L1",
+      "tf": "M5",
+      "window": "FULL",
+      "r": 1,
+      "holm_significant": false,
+      "classification": "INCONCLUSIVE_LOW_N"
+    },
+    "L1|M5|FULL|R2": {
+      "events": 75,
+      "orders": 75,
+      "fills": 75,
+      "fill_rate": 1.0,
+      "analysed": 75,
+      "independent_days": 72,
+      "win_rate": 0.32,
+      "mean_net_r": -0.10869221333333333,
+      "total_net_r": -8.151916,
+      "upper95_mean_net_r": 0.14668930136986302,
+      "p_value": 0.7638,
+      "mean_s0_pips": 5.854666666666667,
+      "mean_commission_r": 0.00772916,
+      "mean_s0_r": 0.056977266666666665,
+      "states": {
+        "FILLED": 49,
+        "FILLED_AT_PLACEMENT": 26
+      },
+      "exit_reasons": {
+        "SESSION_CLOSE": 4,
+        "SL": 50,
+        "TP": 21
+      },
+      "by_side": {
+        "LONG": {
+          "analysed": 29,
+          "mean_net_r": -0.35810131034482756,
+          "win_rate": 0.20689655172413793
+        },
+        "SHORT": {
+          "analysed": 46,
+          "mean_net_r": 0.04854395652173913,
+          "win_rate": 0.391304347826087
+        }
+      },
+      "mean_cost_share_r": 0.06470642666666666,
+      "level": "L1",
+      "tf": "M5",
+      "window": "FULL",
+      "r": 2,
+      "holm_significant": false,
+      "classification": "INCONCLUSIVE_LOW_N"
+    },
+    "L1|M5|FULL|R3": {
+      "events": 75,
+      "orders": 75,
+      "fills": 75,
+      "fill_rate": 1.0,
+      "analysed": 75,
+      "independent_days": 72,
+      "win_rate": 0.24,
+      "mean_net_r": -0.15175998666666668,
+      "total_net_r": -11.381999,
+      "upper95_mean_net_r": 0.152330947368421,
+      "p_value": 0.8004,
+      "mean_s0_pips": 5.854666666666667,
+      "mean_commission_r": 0.00772916,
+      "mean_s0_r": 0.056977266666666665,
+      "states": {
+        "FILLED": 49,
+        "FILLED_AT_PLACEMENT": 26
+      },
+      "exit_reasons": {
+        "SESSION_CLOSE": 6,
+        "SL": 55,
+        "TP": 14
+      },
+      "by_side": {
+        "LONG": {
+          "analysed": 29,
+          "mean_net_r": -0.1860911379310345,
+          "win_rate": 0.20689655172413793
+        },
+        "SHORT": {
+          "analysed": 46,
+          "mean_net_r": -0.1301164347826087,
+          "win_rate": 0.2608695652173913
+        }
+      },
+      "mean_cost_share_r": 0.06470642666666666,
+      "level": "L1",
+      "tf": "M5",
+      "window": "FULL",
+      "r": 3,
+      "holm_significant": false,
+      "classification": "INCONCLUSIVE_LOW_N"
+    },
+    "L1|M5|NY|R1": {
+      "events": 19,
+      "orders": 19,
+      "fills": 19,
+      "fill_rate": 1.0,
+      "analysed": 19,
+      "independent_days": 18,
+      "win_rate": 0.3157894736842105,
+      "mean_net_r": -0.5091948947368422,
+      "total_net_r": -9.674703000000001,
+      "upper95_mean_net_r": -0.21616877777777777,
+      "p_value": 0.9956,
+      "mean_s0_pips": 5.189473684210526,
+      "mean_commission_r": 0.0057118421052631575,
+      "mean_s0_r": 0.03640678947368421,
+      "states": {
+        "FILLED": 10,
+        "FILLED_AT_PLACEMENT": 9
+      },
+      "exit_reasons": {
+        "SESSION_CLOSE": 3,
+        "SL": 13,
+        "TP": 3
+      },
+      "by_side": {
+        "LONG": {
+          "analysed": 6,
+          "mean_net_r": -0.6707926666666667,
+          "win_rate": 0.16666666666666666
+        },
+        "SHORT": {
+          "analysed": 13,
+          "mean_net_r": -0.4346113076923077,
+          "win_rate": 0.38461538461538464
+        }
+      },
+      "mean_cost_share_r": 0.042118631578947366,
+      "level": "L1",
+      "tf": "M5",
+      "window": "NY",
+      "r": 1,
+      "holm_significant": false,
+      "classification": "INCONCLUSIVE_LOW_N"
+    },
+    "L1|M5|NY|R2": {
+      "events": 19,
+      "orders": 19,
+      "fills": 19,
+      "fill_rate": 1.0,
+      "analysed": 19,
+      "independent_days": 18,
+      "win_rate": 0.2631578947368421,
+      "mean_net_r": -0.5092446842105263,
+      "total_net_r": -9.675649,
+      "upper95_mean_net_r": -0.13621247368421052,
+      "p_value": 0.9847,
+      "mean_s0_pips": 5.189473684210526,
+      "mean_commission_r": 0.0057118421052631575,
+      "mean_s0_r": 0.03640678947368421,
+      "states": {
+        "FILLED": 10,
+        "FILLED_AT_PLACEMENT": 9
+      },
+      "exit_reasons": {
+        "SESSION_CLOSE": 3,
+        "SL": 14,
+        "TP": 2
+      },
+      "by_side": {
+        "LONG": {
+          "analysed": 6,
+          "mean_net_r": -0.5040496666666666,
+          "win_rate": 0.16666666666666666
+        },
+        "SHORT": {
+          "analysed": 13,
+          "mean_net_r": -0.5116423846153846,
+          "win_rate": 0.3076923076923077
+        }
+      },
+      "mean_cost_share_r": 0.042118631578947366,
+      "level": "L1",
+      "tf": "M5",
+      "window": "NY",
+      "r": 2,
+      "holm_significant": false,
+      "classification": "INCONCLUSIVE_LOW_N"
+    },
+    "L1|M5|NY|R3": {
+      "events": 19,
+      "orders": 19,
+      "fills": 19,
+      "fill_rate": 1.0,
+      "analysed": 19,
+      "independent_days": 18,
+      "win_rate": 0.21052631578947367,
+      "mean_net_r": -0.6148823157894737,
+      "total_net_r": -11.682764,
+      "upper95_mean_net_r": -0.2086834545454545,
+      "p_value": 0.9907,
+      "mean_s0_pips": 5.189473684210526,
+      "mean_commission_r": 0.0057118421052631575,
+      "mean_s0_r": 0.03640678947368421,
+      "states": {
+        "FILLED": 10,
+        "FILLED_AT_PLACEMENT": 9
+      },
+      "exit_reasons": {
+        "SESSION_CLOSE": 3,
+        "SL": 15,
+        "TP": 1
+      },
+      "by_side": {
+        "LONG": {
+          "analysed": 6,
+          "mean_net_r": -0.3373065,
+          "win_rate": 0.16666666666666666
+        },
+        "SHORT": {
+          "analysed": 13,
+          "mean_net_r": -0.7429942307692308,
+          "win_rate": 0.23076923076923078
+        }
+      },
+      "mean_cost_share_r": 0.042118631578947366,
+      "level": "L1",
+      "tf": "M5",
+      "window": "NY",
+      "r": 3,
+      "holm_significant": false,
+      "classification": "INCONCLUSIVE_LOW_N"
+    },
+    "L1|M15|FULL|R1": {
+      "events": 73,
+      "orders": 73,
+      "fills": 71,
+      "fill_rate": 0.9726027397260274,
+      "analysed": 71,
+      "independent_days": 68,
+      "win_rate": 0.43661971830985913,
+      "mean_net_r": -0.10658512676056338,
+      "total_net_r": -7.567544,
+      "upper95_mean_net_r": 0.08262392857142856,
+      "p_value": 0.8264,
+      "mean_s0_pips": 5.964788732394366,
+      "mean_commission_r": 0.00474587323943662,
+      "mean_s0_r": 0.03586040845070422,
+      "states": {
+        "FILLED": 45,
+        "FILLED_AT_PLACEMENT": 26,
+        "IN_QUARANTINE": 1,
+        "MISSED_TP_FIRST": 1
+      },
+      "exit_reasons": {
+        "SESSION_CLOSE": 4,
+        "SL": 37,
+        "TP": 30
+      },
+      "by_side": {
+        "LONG": {
+          "analysed": 28,
+          "mean_net_r": -0.1467654642857143,
+          "win_rate": 0.42857142857142855
+        },
+        "SHORT": {
+          "analysed": 43,
+          "mean_net_r": -0.08042118604651163,
+          "win_rate": 0.4418604651162791
+        }
+      },
+      "mean_cost_share_r": 0.04060628169014084,
+      "level": "L1",
+      "tf": "M15",
+      "window": "FULL",
+      "r": 1,
+      "holm_significant": false,
+      "classification": "INCONCLUSIVE_LOW_N"
+    },
+    "L1|M15|FULL|R2": {
+      "events": 73,
+      "orders": 73,
+      "fills": 72,
+      "fill_rate": 0.9863013698630136,
+      "analysed": 72,
+      "independent_days": 69,
+      "win_rate": 0.3472222222222222,
+      "mean_net_r": 0.006324597222222221,
+      "total_net_r": 0.4553709999999999,
+      "upper95_mean_net_r": 0.27144966197183107,
+      "p_value": 0.4915,
+      "mean_s0_pips": 5.956944444444444,
+      "mean_commission_r": 0.004723388888888889,
+      "mean_s0_r": 0.035643527777777774,
+      "states": {
+        "FILLED": 46,
+        "FILLED_AT_PLACEMENT": 26,
+        "IN_QUARANTINE": 1
+      },
+      "exit_reasons": {
+        "SESSION_CLOSE": 10,
+        "SL": 42,
+        "TP": 20
+      },
+      "by_side": {
+        "LONG": {
+          "analysed": 29,
+          "mean_net_r": -0.006799448275862047,
+          "win_rate": 0.3793103448275862
+        },
+        "SHORT": {
+          "analysed": 43,
+          "mean_net_r": 0.015175697674418587,
+          "win_rate": 0.32558139534883723
+        }
+      },
+      "mean_cost_share_r": 0.04036691666666666,
+      "level": "L1",
+      "tf": "M15",
+      "window": "FULL",
+      "r": 2,
+      "holm_significant": false,
+      "classification": "INCONCLUSIVE_LOW_N"
+    },
+    "L1|M15|FULL|R3": {
+      "events": 73,
+      "orders": 73,
+      "fills": 72,
+      "fill_rate": 0.9863013698630136,
+      "analysed": 72,
+      "independent_days": 69,
+      "win_rate": 0.3055555555555556,
+      "mean_net_r": 0.08536168055555556,
+      "total_net_r": 6.146041,
+      "upper95_mean_net_r": 0.41488784722222216,
+      "p_value": 0.3457,
+      "mean_s0_pips": 5.956944444444444,
+      "mean_commission_r": 0.004723388888888889,
+      "mean_s0_r": 0.035643527777777774,
+      "states": {
+        "FILLED": 46,
+        "FILLED_AT_PLACEMENT": 26,
+        "IN_QUARANTINE": 1
+      },
+      "exit_reasons": {
+        "SESSION_CLOSE": 12,
+        "SL": 45,
+        "TP": 15
+      },
+      "by_side": {
+        "LONG": {
+          "analysed": 29,
+          "mean_net_r": 0.08837089655172414,
+          "win_rate": 0.3448275862068966
+        },
+        "SHORT": {
+          "analysed": 43,
+          "mean_net_r": 0.08333220930232559,
+          "win_rate": 0.27906976744186046
+        }
+      },
+      "mean_cost_share_r": 0.04036691666666666,
+      "level": "L1",
+      "tf": "M15",
+      "window": "FULL",
+      "r": 3,
+      "holm_significant": false,
+      "classification": "INCONCLUSIVE_LOW_N"
+    },
+    "L1|M15|NY|R1": {
+      "events": 16,
+      "orders": 16,
+      "fills": 16,
+      "fill_rate": 1.0,
+      "analysed": 16,
+      "independent_days": 15,
+      "win_rate": 0.25,
+      "mean_net_r": -0.3945213125,
+      "total_net_r": -6.312341,
+      "upper95_mean_net_r": -0.058429624999999985,
+      "p_value": 0.9708,
+      "mean_s0_pips": 5.325,
+      "mean_commission_r": 0.0034559375,
+      "mean_s0_r": 0.0241908125,
+      "states": {
+        "FILLED": 9,
+        "FILLED_AT_PLACEMENT": 7
+      },
+      "exit_reasons": {
+        "SESSION_CLOSE": 4,
+        "SL": 9,
+        "TP": 3
+      },
+      "by_side": {
+        "LONG": {
+          "analysed": 5,
+          "mean_net_r": -0.602595,
+          "win_rate": 0.2
+        },
+        "SHORT": {
+          "analysed": 11,
+          "mean_net_r": -0.2999423636363636,
+          "win_rate": 0.2727272727272727
+        }
+      },
+      "mean_cost_share_r": 0.027646749999999998,
+      "level": "L1",
+      "tf": "M15",
+      "window": "NY",
+      "r": 1,
+      "holm_significant": false,
+      "classification": "INCONCLUSIVE_LOW_N"
+    },
+    "L1|M15|NY|R2": {
+      "events": 16,
+      "orders": 16,
+      "fills": 16,
+      "fill_rate": 1.0,
+      "analysed": 16,
+      "independent_days": 15,
+      "win_rate": 0.1875,
+      "mean_net_r": -0.36592737499999994,
+      "total_net_r": -5.854837999999999,
+      "upper95_mean_net_r": 0.06754925000000009,
+      "p_value": 0.92,
+      "mean_s0_pips": 5.325,
+      "mean_commission_r": 0.0034559375,
+      "mean_s0_r": 0.0241908125,
+      "states": {
+        "FILLED": 9,
+        "FILLED_AT_PLACEMENT": 7
+      },
+      "exit_reasons": {
+        "SESSION_CLOSE": 5,
+        "SL": 9,
+        "TP": 2
+      },
+      "by_side": {
+        "LONG": {
+          "analysed": 5,
+          "mean_net_r": -0.40256919999999996,
+          "win_rate": 0.2
+        },
+        "SHORT": {
+          "analysed": 11,
+          "mean_net_r": -0.34927199999999997,
+          "win_rate": 0.18181818181818182
+        }
+      },
+      "mean_cost_share_r": 0.027646749999999998,
+      "level": "L1",
+      "tf": "M15",
+      "window": "NY",
+      "r": 2,
+      "holm_significant": false,
+      "classification": "INCONCLUSIVE_LOW_N"
+    },
+    "L1|M15|NY|R3": {
+      "events": 16,
+      "orders": 16,
+      "fills": 16,
+      "fill_rate": 1.0,
+      "analysed": 16,
+      "independent_days": 15,
+      "win_rate": 0.1875,
+      "mean_net_r": -0.3818231875,
+      "total_net_r": -6.109171,
+      "upper95_mean_net_r": 0.032922266666666644,
+      "p_value": 0.9357,
+      "mean_s0_pips": 5.325,
+      "mean_commission_r": 0.0034559375,
+      "mean_s0_r": 0.0241908125,
+      "states": {
+        "FILLED": 9,
+        "FILLED_AT_PLACEMENT": 7
+      },
+      "exit_reasons": {
+        "SESSION_CLOSE": 7,
+        "SL": 9
+      },
+      "by_side": {
+        "LONG": {
+          "analysed": 5,
+          "mean_net_r": -0.44312880000000004,
+          "win_rate": 0.2
+        },
+        "SHORT": {
+          "analysed": 11,
+          "mean_net_r": -0.35395699999999997,
+          "win_rate": 0.18181818181818182
+        }
+      },
+      "mean_cost_share_r": 0.027646749999999998,
+      "level": "L1",
+      "tf": "M15",
+      "window": "NY",
+      "r": 3,
+      "holm_significant": false,
+      "classification": "INCONCLUSIVE_LOW_N"
+    },
+    "L2|M5|FULL|R1": {
+      "events": 127,
+      "orders": 127,
+      "fills": 122,
+      "fill_rate": 0.9606299212598425,
+      "analysed": 122,
+      "independent_days": 110,
+      "win_rate": 0.4344262295081967,
+      "mean_net_r": -0.15085346721311474,
+      "total_net_r": -18.404123,
+      "upper95_mean_net_r": -0.0009393966942148886,
+      "p_value": 0.9503,
+      "mean_s0_pips": 5.559016393442623,
+      "mean_commission_r": 0.008950254098360656,
+      "mean_s0_r": 0.06446061475409835,
+      "states": {
+        "FILLED": 90,
+        "FILLED_AT_PLACEMENT": 32,
+        "MISSED_TP_FIRST": 5
+      },
+      "exit_reasons": {
+        "SESSION_CLOSE": 2,
+        "SL": 69,
+        "TP": 51
+      },
+      "by_side": {
+        "LONG": {
+          "analysed": 64,
+          "mean_net_r": -0.113100640625,
+          "win_rate": 0.453125
+        },
+        "SHORT": {
+          "analysed": 58,
+          "mean_net_r": -0.19251175862068967,
+          "win_rate": 0.41379310344827586
+        }
+      },
+      "mean_cost_share_r": 0.07341086885245901,
+      "level": "L2",
+      "tf": "M5",
+      "window": "FULL",
+      "r": 1,
+      "holm_significant": false,
+      "classification": "NEGATIVE"
+    },
+    "L2|M5|FULL|R2": {
+      "events": 127,
+      "orders": 127,
+      "fills": 123,
+      "fill_rate": 0.968503937007874,
+      "analysed": 123,
+      "independent_days": 111,
+      "win_rate": 0.3089430894308943,
+      "mean_net_r": -0.14389347154471543,
+      "total_net_r": -17.698897,
+      "upper95_mean_net_r": 0.053799415254237204,
+      "p_value": 0.8821,
+      "mean_s0_pips": 5.575609756097561,
+      "mean_commission_r": 0.009008373983739838,
+      "mean_s0_r": 0.06526682926829268,
+      "states": {
+        "FILLED": 91,
+        "FILLED_AT_PLACEMENT": 32,
+        "MISSED_TP_FIRST": 4
+      },
+      "exit_reasons": {
+        "SESSION_CLOSE": 7,
+        "SL": 84,
+        "TP": 32
+      },
+      "by_side": {
+        "LONG": {
+          "analysed": 65,
+          "mean_net_r": -0.1869180923076923,
+          "win_rate": 0.3076923076923077
+        },
+        "SHORT": {
+          "analysed": 58,
+          "mean_net_r": -0.09567622413793103,
+          "win_rate": 0.3103448275862069
+        }
+      },
+      "mean_cost_share_r": 0.07427520325203252,
+      "level": "L2",
+      "tf": "M5",
+      "window": "FULL",
+      "r": 2,
+      "holm_significant": false,
+      "classification": "OPEN"
+    },
+    "L2|M5|FULL|R3": {
+      "events": 127,
+      "orders": 127,
+      "fills": 124,
+      "fill_rate": 0.9763779527559056,
+      "analysed": 124,
+      "independent_days": 112,
+      "win_rate": 0.28225806451612906,
+      "mean_net_r": -0.021357080645161286,
+      "total_net_r": -2.6482779999999995,
+      "upper95_mean_net_r": 0.22411743442622953,
+      "p_value": 0.5727,
+      "mean_s0_pips": 5.583064516129032,
+      "mean_commission_r": 0.009007709677419356,
+      "mean_s0_r": 0.06535239516129032,
+      "states": {
+        "EXPIRED_12_BARS": 2,
+        "FILLED": 92,
+        "FILLED_AT_PLACEMENT": 32,
+        "MISSED_TP_FIRST": 1
+      },
+      "exit_reasons": {
+        "SESSION_CLOSE": 11,
+        "SL": 88,
+        "TP": 25
+      },
+      "by_side": {
+        "LONG": {
+          "analysed": 66,
+          "mean_net_r": -0.06554186363636363,
+          "win_rate": 0.2878787878787879
+        },
+        "SHORT": {
+          "analysed": 58,
+          "mean_net_r": 0.0289221551724138,
+          "win_rate": 0.27586206896551724
+        }
+      },
+      "mean_cost_share_r": 0.07436010483870968,
+      "level": "L2",
+      "tf": "M5",
+      "window": "FULL",
+      "r": 3,
+      "holm_significant": false,
+      "classification": "OPEN"
+    },
+    "L2|M5|NY|R1": {
+      "events": 25,
+      "orders": 25,
+      "fills": 25,
+      "fill_rate": 1.0,
+      "analysed": 25,
+      "independent_days": 24,
+      "win_rate": 0.52,
+      "mean_net_r": -0.029464080000000017,
+      "total_net_r": -0.7366020000000004,
+      "upper95_mean_net_r": 0.29119304166666676,
+      "p_value": 0.5556,
+      "mean_s0_pips": 5.348,
+      "mean_commission_r": 0.00626668,
+      "mean_s0_r": 0.041861800000000005,
+      "states": {
+        "FILLED": 18,
+        "FILLED_AT_PLACEMENT": 7
+      },
+      "exit_reasons": {
+        "SESSION_CLOSE": 2,
+        "SL": 12,
+        "TP": 11
+      },
+      "by_side": {
+        "LONG": {
+          "analysed": 13,
+          "mean_net_r": 0.1581344615384615,
+          "win_rate": 0.6153846153846154
+        },
+        "SHORT": {
+          "analysed": 12,
+          "mean_net_r": -0.23269583333333332,
+          "win_rate": 0.4166666666666667
+        }
+      },
+      "mean_cost_share_r": 0.04812848,
+      "level": "L2",
+      "tf": "M5",
+      "window": "NY",
+      "r": 1,
+      "holm_significant": false,
+      "classification": "INCONCLUSIVE_LOW_N"
+    },
+    "L2|M5|NY|R2": {
+      "events": 25,
+      "orders": 25,
+      "fills": 25,
+      "fill_rate": 1.0,
+      "analysed": 25,
+      "independent_days": 24,
+      "win_rate": 0.36,
+      "mean_net_r": -0.16882032000000002,
+      "total_net_r": -4.220508000000001,
+      "upper95_mean_net_r": 0.22912381481481478,
+      "p_value": 0.7707,
+      "mean_s0_pips": 5.348,
+      "mean_commission_r": 0.00626668,
+      "mean_s0_r": 0.041861800000000005,
+      "states": {
+        "FILLED": 18,
+        "FILLED_AT_PLACEMENT": 7
+      },
+      "exit_reasons": {
+        "SESSION_CLOSE": 6,
+        "SL": 15,
+        "TP": 4
+      },
+      "by_side": {
+        "LONG": {
+          "analysed": 13,
+          "mean_net_r": -0.2346638461538462,
+          "win_rate": 0.38461538461538464
+        },
+        "SHORT": {
+          "analysed": 12,
+          "mean_net_r": -0.09748983333333335,
+          "win_rate": 0.3333333333333333
+        }
+      },
+      "mean_cost_share_r": 0.04812848,
+      "level": "L2",
+      "tf": "M5",
+      "window": "NY",
+      "r": 2,
+      "holm_significant": false,
+      "classification": "INCONCLUSIVE_LOW_N"
+    },
+    "L2|M5|NY|R3": {
+      "events": 25,
+      "orders": 25,
+      "fills": 25,
+      "fill_rate": 1.0,
+      "analysed": 25,
+      "independent_days": 24,
+      "win_rate": 0.32,
+      "mean_net_r": -0.25159376,
+      "total_net_r": -6.289844,
+      "upper95_mean_net_r": 0.15875955999999997,
+      "p_value": 0.8567,
+      "mean_s0_pips": 5.348,
+      "mean_commission_r": 0.00626668,
+      "mean_s0_r": 0.041861800000000005,
+      "states": {
+        "FILLED": 18,
+        "FILLED_AT_PLACEMENT": 7
+      },
+      "exit_reasons": {
+        "SESSION_CLOSE": 8,
+        "SL": 16,
+        "TP": 1
+      },
+      "by_side": {
+        "LONG": {
+          "analysed": 13,
+          "mean_net_r": -0.24659176923076925,
+          "win_rate": 0.38461538461538464
+        },
+        "SHORT": {
+          "analysed": 12,
+          "mean_net_r": -0.2570125833333334,
+          "win_rate": 0.25
+        }
+      },
+      "mean_cost_share_r": 0.04812848,
+      "level": "L2",
+      "tf": "M5",
+      "window": "NY",
+      "r": 3,
+      "holm_significant": false,
+      "classification": "INCONCLUSIVE_LOW_N"
+    },
+    "L2|M15|FULL|R1": {
+      "events": 122,
+      "orders": 122,
+      "fills": 118,
+      "fill_rate": 0.9672131147540983,
+      "analysed": 118,
+      "independent_days": 110,
+      "win_rate": 0.5169491525423728,
+      "mean_net_r": 0.04481966949152543,
+      "total_net_r": 5.288721000000001,
+      "upper95_mean_net_r": 0.18519953333333333,
+      "p_value": 0.3017,
+      "mean_s0_pips": 5.6169491525423725,
+      "mean_commission_r": 0.006136822033898305,
+      "mean_s0_r": 0.044349805084745765,
+      "states": {
+        "FILLED": 92,
+        "FILLED_AT_PLACEMENT": 26,
+        "MISSED_TP_FIRST": 4
+      },
+      "exit_reasons": {
+        "SESSION_CLOSE": 2,
+        "SL": 55,
+        "TP": 61
+      },
+      "by_side": {
+        "LONG": {
+          "analysed": 63,
+          "mean_net_r": 0.025175142857142865,
+          "win_rate": 0.5079365079365079
+        },
+        "SHORT": {
+          "analysed": 55,
+          "mean_net_r": 0.06732158181818183,
+          "win_rate": 0.5272727272727272
+        }
+      },
+      "mean_cost_share_r": 0.05048662711864407,
+      "level": "L2",
+      "tf": "M15",
+      "window": "FULL",
+      "r": 1,
+      "holm_significant": false,
+      "classification": "OPEN"
+    },
+    "L2|M15|FULL|R2": {
+      "events": 122,
+      "orders": 122,
+      "fills": 120,
+      "fill_rate": 0.9836065573770492,
+      "analysed": 120,
+      "independent_days": 112,
+      "win_rate": 0.4,
+      "mean_net_r": 0.11383978333333333,
+      "total_net_r": 13.660774,
+      "upper95_mean_net_r": 0.3200579411764705,
+      "p_value": 0.1833,
+      "mean_s0_pips": 5.6,
+      "mean_commission_r": 0.006156358333333333,
+      "mean_s0_r": 0.04422653333333334,
+      "states": {
+        "FILLED": 94,
+        "FILLED_AT_PLACEMENT": 26,
+        "MISSED_TP_FIRST": 2
+      },
+      "exit_reasons": {
+        "SESSION_CLOSE": 13,
+        "SL": 70,
+        "TP": 37
+      },
+      "by_side": {
+        "LONG": {
+          "analysed": 65,
+          "mean_net_r": -0.05120307692307692,
+          "win_rate": 0.35384615384615387
+        },
+        "SHORT": {
+          "analysed": 55,
+          "mean_net_r": 0.30889043636363633,
+          "win_rate": 0.45454545454545453
+        }
+      },
+      "mean_cost_share_r": 0.05038289166666667,
+      "level": "L2",
+      "tf": "M15",
+      "window": "FULL",
+      "r": 2,
+      "holm_significant": false,
+      "classification": "OPEN"
+    },
+    "L2|M15|FULL|R3": {
+      "events": 122,
+      "orders": 122,
+      "fills": 121,
+      "fill_rate": 0.9918032786885246,
+      "analysed": 121,
+      "independent_days": 113,
+      "win_rate": 0.35537190082644626,
+      "mean_net_r": 0.16601736363636366,
+      "total_net_r": 20.088101,
+      "upper95_mean_net_r": 0.4190949916666667,
+      "p_value": 0.1394,
+      "mean_s0_pips": 5.599173553719008,
+      "mean_commission_r": 0.0062252148760330575,
+      "mean_s0_r": 0.044681462809917354,
+      "states": {
+        "FILLED": 95,
+        "FILLED_AT_PLACEMENT": 26,
+        "MISSED_TP_FIRST": 1
+      },
+      "exit_reasons": {
+        "SESSION_CLOSE": 18,
+        "SL": 76,
+        "TP": 27
+      },
+      "by_side": {
+        "LONG": {
+          "analysed": 66,
+          "mean_net_r": -0.06587948484848484,
+          "win_rate": 0.30303030303030304
+        },
+        "SHORT": {
+          "analysed": 55,
+          "mean_net_r": 0.44429358181818185,
+          "win_rate": 0.41818181818181815
+        }
+      },
+      "mean_cost_share_r": 0.05090667768595041,
+      "level": "L2",
+      "tf": "M15",
+      "window": "FULL",
+      "r": 3,
+      "holm_significant": false,
+      "classification": "OPEN"
+    },
+    "L2|M15|NY|R1": {
+      "events": 26,
+      "orders": 26,
+      "fills": 26,
+      "fill_rate": 1.0,
+      "analysed": 26,
+      "independent_days": 25,
+      "win_rate": 0.5384615384615384,
+      "mean_net_r": 0.13636823076923077,
+      "total_net_r": 3.5455740000000002,
+      "upper95_mean_net_r": 0.45307256000000007,
+      "p_value": 0.2304,
+      "mean_s0_pips": 5.730769230769231,
+      "mean_commission_r": 0.0040938846153846156,
+      "mean_s0_r": 0.029809,
+      "states": {
+        "FILLED": 19,
+        "FILLED_AT_PLACEMENT": 7
+      },
+      "exit_reasons": {
+        "SESSION_CLOSE": 2,
+        "SL": 10,
+        "TP": 14
+      },
+      "by_side": {
+        "LONG": {
+          "analysed": 15,
+          "mean_net_r": 0.11611246666666666,
+          "win_rate": 0.5333333333333333
+        },
+        "SHORT": {
+          "analysed": 11,
+          "mean_net_r": 0.1639897272727273,
+          "win_rate": 0.5454545454545454
+        }
+      },
+      "mean_cost_share_r": 0.03390288461538461,
+      "level": "L2",
+      "tf": "M15",
+      "window": "NY",
+      "r": 1,
+      "holm_significant": false,
+      "classification": "INCONCLUSIVE_LOW_N"
+    },
+    "L2|M15|NY|R2": {
+      "events": 26,
+      "orders": 26,
+      "fills": 26,
+      "fill_rate": 1.0,
+      "analysed": 26,
+      "independent_days": 25,
+      "win_rate": 0.38461538461538464,
+      "mean_net_r": -0.070015,
+      "total_net_r": -1.8203899999999997,
+      "upper95_mean_net_r": 0.3106054615384615,
+      "p_value": 0.621,
+      "mean_s0_pips": 5.730769230769231,
+      "mean_commission_r": 0.0040938846153846156,
+      "mean_s0_r": 0.029809,
+      "states": {
+        "FILLED": 19,
+        "FILLED_AT_PLACEMENT": 7
+      },
+      "exit_reasons": {
+        "SESSION_CLOSE": 9,
+        "SL": 14,
+        "TP": 3
+      },
+      "by_side": {
+        "LONG": {
+          "analysed": 15,
+          "mean_net_r": -0.20832873333333335,
+          "win_rate": 0.3333333333333333
+        },
+        "SHORT": {
+          "analysed": 11,
+          "mean_net_r": 0.1185946363636364,
+          "win_rate": 0.45454545454545453
+        }
+      },
+      "mean_cost_share_r": 0.03390288461538461,
+      "level": "L2",
+      "tf": "M15",
+      "window": "NY",
+      "r": 2,
+      "holm_significant": false,
+      "classification": "INCONCLUSIVE_LOW_N"
+    },
+    "L2|M15|NY|R3": {
+      "events": 26,
+      "orders": 26,
+      "fills": 26,
+      "fill_rate": 1.0,
+      "analysed": 26,
+      "independent_days": 25,
+      "win_rate": 0.34615384615384615,
+      "mean_net_r": -0.27911646153846154,
+      "total_net_r": -7.257028,
+      "upper95_mean_net_r": 0.02612880769230769,
+      "p_value": 0.933,
+      "mean_s0_pips": 5.730769230769231,
+      "mean_commission_r": 0.0040938846153846156,
+      "mean_s0_r": 0.029809,
+      "states": {
+        "FILLED": 19,
+        "FILLED_AT_PLACEMENT": 7
+      },
+      "exit_reasons": {
+        "SESSION_CLOSE": 11,
+        "SL": 15
+      },
+      "by_side": {
+        "LONG": {
+          "analysed": 15,
+          "mean_net_r": -0.27484473333333337,
+          "win_rate": 0.3333333333333333
+        },
+        "SHORT": {
+          "analysed": 11,
+          "mean_net_r": -0.2849415454545455,
+          "win_rate": 0.36363636363636365
+        }
+      },
+      "mean_cost_share_r": 0.03390288461538461,
+      "level": "L2",
+      "tf": "M15",
+      "window": "NY",
+      "r": 3,
+      "holm_significant": false,
+      "classification": "INCONCLUSIVE_LOW_N"
+    },
+    "L3|M5|FULL|R1": {
+      "events": 423,
+      "orders": 423,
+      "fills": 405,
+      "fill_rate": 0.9574468085106383,
+      "analysed": 405,
+      "independent_days": 122,
+      "win_rate": 0.42962962962962964,
+      "mean_net_r": -0.15728716296296297,
+      "total_net_r": -63.701301,
+      "upper95_mean_net_r": -0.07659092929292924,
+      "p_value": 0.9993,
+      "mean_s0_pips": 5.6661728395061735,
+      "mean_commission_r": 0.009008404938271606,
+      "mean_s0_r": 0.0657973086419753,
+      "states": {
+        "FILLED": 282,
+        "FILLED_AT_PLACEMENT": 123,
+        "MISSED_TP_FIRST": 18
+      },
+      "exit_reasons": {
+        "SESSION_CLOSE": 10,
+        "SL": 229,
+        "TP": 166
+      },
+      "by_side": {
+        "LONG": {
+          "analysed": 185,
+          "mean_net_r": -0.18503112432432434,
+          "win_rate": 0.41081081081081083
+        },
+        "SHORT": {
+          "analysed": 220,
+          "mean_net_r": -0.13395701363636364,
+          "win_rate": 0.44545454545454544
+        }
+      },
+      "mean_cost_share_r": 0.07480571358024692,
+      "level": "L3",
+      "tf": "M5",
+      "window": "FULL",
+      "r": 1,
+      "holm_significant": false,
+      "classification": "NEGATIVE"
+    },
+    "L3|M5|FULL|R2": {
+      "events": 423,
+      "orders": 423,
+      "fills": 413,
+      "fill_rate": 0.9763593380614657,
+      "analysed": 413,
+      "independent_days": 123,
+      "win_rate": 0.288135593220339,
+      "mean_net_r": -0.2030987699757869,
+      "total_net_r": -83.879792,
+      "upper95_mean_net_r": -0.0993715395348837,
+      "p_value": 0.9989,
+      "mean_s0_pips": 5.680387409200969,
+      "mean_commission_r": 0.009257467312348668,
+      "mean_s0_r": 0.0679399200968523,
+      "states": {
+        "EXPIRED_12_BARS": 1,
+        "FILLED": 290,
+        "FILLED_AT_PLACEMENT": 123,
+        "MISSED_TP_FIRST": 9
+      },
+      "exit_reasons": {
+        "SESSION_CLOSE": 21,
+        "SL": 291,
+        "TP": 101
+      },
+      "by_side": {
+        "LONG": {
+          "analysed": 193,
+          "mean_net_r": -0.2978783834196891,
+          "win_rate": 0.2538860103626943
+        },
+        "SHORT": {
+          "analysed": 220,
+          "mean_net_r": -0.11995120000000001,
+          "win_rate": 0.3181818181818182
+        }
+      },
+      "mean_cost_share_r": 0.07719738740920097,
+      "level": "L3",
+      "tf": "M5",
+      "window": "FULL",
+      "r": 2,
+      "holm_significant": false,
+      "classification": "NEGATIVE"
+    },
+    "L3|M5|FULL|R3": {
+      "events": 423,
+      "orders": 423,
+      "fills": 415,
+      "fill_rate": 0.9810874704491725,
+      "analysed": 415,
+      "independent_days": 123,
+      "win_rate": 0.24819277108433735,
+      "mean_net_r": -0.1366154939759036,
+      "total_net_r": -56.69543,
+      "upper95_mean_net_r": -0.0042353384615384775,
+      "p_value": 0.9544,
+      "mean_s0_pips": 5.68722891566265,
+      "mean_commission_r": 0.009249224096385542,
+      "mean_s0_r": 0.06795120722891566,
+      "states": {
+        "EXPIRED_12_BARS": 4,
+        "FILLED": 292,
+        "FILLED_AT_PLACEMENT": 123,
+        "MISSED_TP_FIRST": 4
+      },
+      "exit_reasons": {
+        "SESSION_CLOSE": 31,
+        "SL": 307,
+        "TP": 77
+      },
+      "by_side": {
+        "LONG": {
+          "analysed": 195,
+          "mean_net_r": -0.18952907179487177,
+          "win_rate": 0.23076923076923078
+        },
+        "SHORT": {
+          "analysed": 220,
+          "mean_net_r": -0.08971482272727273,
+          "win_rate": 0.2636363636363636
+        }
+      },
+      "mean_cost_share_r": 0.0772004313253012,
+      "level": "L3",
+      "tf": "M5",
+      "window": "FULL",
+      "r": 3,
+      "holm_significant": false,
+      "classification": "NEGATIVE"
+    },
+    "L3|M5|NY|R1": {
+      "events": 120,
+      "orders": 120,
+      "fills": 117,
+      "fill_rate": 0.975,
+      "analysed": 117,
+      "independent_days": 78,
+      "win_rate": 0.4444444444444444,
+      "mean_net_r": -0.16713340170940172,
+      "total_net_r": -19.554608,
+      "upper95_mean_net_r": -0.0368614273504274,
+      "p_value": 0.982,
+      "mean_s0_pips": 5.343589743589744,
+      "mean_commission_r": 0.006904940170940171,
+      "mean_s0_r": 0.0478972735042735,
+      "states": {
+        "FILLED": 78,
+        "FILLED_AT_PLACEMENT": 39,
+        "MISSED_TP_FIRST": 3
+      },
+      "exit_reasons": {
+        "SESSION_CLOSE": 8,
+        "SL": 65,
+        "TP": 44
+      },
+      "by_side": {
+        "LONG": {
+          "analysed": 51,
+          "mean_net_r": -0.120588568627451,
+          "win_rate": 0.45098039215686275
+        },
+        "SHORT": {
+          "analysed": 66,
+          "mean_net_r": -0.20309986363636365,
+          "win_rate": 0.4393939393939394
+        }
+      },
+      "mean_cost_share_r": 0.05480221367521367,
+      "level": "L3",
+      "tf": "M5",
+      "window": "NY",
+      "r": 1,
+      "holm_significant": false,
+      "classification": "NEGATIVE"
+    },
+    "L3|M5|NY|R2": {
+      "events": 120,
+      "orders": 120,
+      "fills": 119,
+      "fill_rate": 0.9916666666666667,
+      "analysed": 119,
+      "independent_days": 79,
+      "win_rate": 0.2605042016806723,
+      "mean_net_r": -0.4152832100840336,
+      "total_net_r": -49.418702,
+      "upper95_mean_net_r": -0.25685951538461527,
+      "p_value": 1.0,
+      "mean_s0_pips": 5.363025210084034,
+      "mean_commission_r": 0.007330579831932773,
+      "mean_s0_r": 0.051622521008403366,
+      "states": {
+        "FILLED": 80,
+        "FILLED_AT_PLACEMENT": 39,
+        "MISSED_TP_FIRST": 1
+      },
+      "exit_reasons": {
+        "SESSION_CLOSE": 16,
+        "SL": 87,
+        "TP": 16
+      },
+      "by_side": {
+        "LONG": {
+          "analysed": 53,
+          "mean_net_r": -0.570715962264151,
+          "win_rate": 0.18867924528301888
+        },
+        "SHORT": {
+          "analysed": 66,
+          "mean_net_r": -0.290466,
+          "win_rate": 0.3181818181818182
+        }
+      },
+      "mean_cost_share_r": 0.05895310084033614,
+      "level": "L3",
+      "tf": "M5",
+      "window": "NY",
+      "r": 2,
+      "holm_significant": false,
+      "classification": "NEGATIVE"
+    },
+    "L3|M5|NY|R3": {
+      "events": 120,
+      "orders": 120,
+      "fills": 119,
+      "fill_rate": 0.9916666666666667,
+      "analysed": 119,
+      "independent_days": 79,
+      "win_rate": 0.226890756302521,
+      "mean_net_r": -0.4744814705882353,
+      "total_net_r": -56.463295,
+      "upper95_mean_net_r": -0.29466426923076944,
+      "p_value": 1.0,
+      "mean_s0_pips": 5.363025210084034,
+      "mean_commission_r": 0.007330579831932773,
+      "mean_s0_r": 0.051622521008403366,
+      "states": {
+        "FILLED": 80,
+        "FILLED_AT_PLACEMENT": 39,
+        "MISSED_TP_FIRST": 1
+      },
+      "exit_reasons": {
+        "SESSION_CLOSE": 21,
+        "SL": 91,
+        "TP": 7
+      },
+      "by_side": {
+        "LONG": {
+          "analysed": 53,
+          "mean_net_r": -0.5742784716981133,
+          "win_rate": 0.16981132075471697
+        },
+        "SHORT": {
+          "analysed": 66,
+          "mean_net_r": -0.39434145454545455,
+          "win_rate": 0.2727272727272727
+        }
+      },
+      "mean_cost_share_r": 0.05895310084033614,
+      "level": "L3",
+      "tf": "M5",
+      "window": "NY",
+      "r": 3,
+      "holm_significant": false,
+      "classification": "NEGATIVE"
+    },
+    "L3|M15|FULL|R1": {
+      "events": 362,
+      "orders": 362,
+      "fills": 354,
+      "fill_rate": 0.9779005524861878,
+      "analysed": 354,
+      "independent_days": 121,
+      "win_rate": 0.4463276836158192,
+      "mean_net_r": -0.09941912429378531,
+      "total_net_r": -35.19437,
+      "upper95_mean_net_r": -0.011763206896551713,
+      "p_value": 0.9709,
+      "mean_s0_pips": 5.616384180790961,
+      "mean_commission_r": 0.0057513305084745765,
+      "mean_s0_r": 0.04191750847457627,
+      "states": {
+        "FILLED": 264,
+        "FILLED_AT_PLACEMENT": 90,
+        "MISSED_TP_FIRST": 8
+      },
+      "exit_reasons": {
+        "SESSION_CLOSE": 16,
+        "SL": 185,
+        "TP": 153
+      },
+      "by_side": {
+        "LONG": {
+          "analysed": 172,
+          "mean_net_r": -0.12815936046511628,
+          "win_rate": 0.43023255813953487
+        },
+        "SHORT": {
+          "analysed": 182,
+          "mean_net_r": -0.07225802197802197,
+          "win_rate": 0.46153846153846156
+        }
+      },
+      "mean_cost_share_r": 0.04766883898305085,
+      "level": "L3",
+      "tf": "M15",
+      "window": "FULL",
+      "r": 1,
+      "holm_significant": false,
+      "classification": "NEGATIVE"
+    },
+    "L3|M15|FULL|R2": {
+      "events": 362,
+      "orders": 362,
+      "fills": 357,
+      "fill_rate": 0.9861878453038674,
+      "analysed": 357,
+      "independent_days": 121,
+      "win_rate": 0.34173669467787116,
+      "mean_net_r": -0.06288478991596638,
+      "total_net_r": -22.44987,
+      "upper95_mean_net_r": 0.058260621983914206,
+      "p_value": 0.8101,
+      "mean_s0_pips": 5.6156862745098035,
+      "mean_commission_r": 0.005792352941176471,
+      "mean_s0_r": 0.0422540700280112,
+      "states": {
+        "FILLED": 267,
+        "FILLED_AT_PLACEMENT": 90,
+        "MISSED_TP_FIRST": 5
+      },
+      "exit_reasons": {
+        "SESSION_CLOSE": 48,
+        "SL": 220,
+        "TP": 89
+      },
+      "by_side": {
+        "LONG": {
+          "analysed": 175,
+          "mean_net_r": -0.18806474857142855,
+          "win_rate": 0.29714285714285715
+        },
+        "SHORT": {
+          "analysed": 182,
+          "mean_net_r": 0.05748055494505495,
+          "win_rate": 0.38461538461538464
+        }
+      },
+      "mean_cost_share_r": 0.04804642296918767,
+      "level": "L3",
+      "tf": "M15",
+      "window": "FULL",
+      "r": 2,
+      "holm_significant": false,
+      "classification": "OPEN"
+    },
+    "L3|M15|FULL|R3": {
+      "events": 362,
+      "orders": 362,
+      "fills": 359,
+      "fill_rate": 0.9917127071823204,
+      "analysed": 359,
+      "independent_days": 121,
+      "win_rate": 0.298050139275766,
+      "mean_net_r": -0.043836869080779946,
+      "total_net_r": -15.737436,
+      "upper95_mean_net_r": 0.10048838186813186,
+      "p_value": 0.6983,
+      "mean_s0_pips": 5.607520891364902,
+      "mean_commission_r": 0.005882660167130919,
+      "mean_s0_r": 0.042607974930362114,
+      "states": {
+        "FILLED": 269,
+        "FILLED_AT_PLACEMENT": 90,
+        "MISSED_TP_FIRST": 3
+      },
+      "exit_reasons": {
+        "SESSION_CLOSE": 61,
+        "SL": 236,
+        "TP": 62
+      },
+      "by_side": {
+        "LONG": {
+          "analysed": 176,
+          "mean_net_r": -0.25471018181818184,
+          "win_rate": 0.23863636363636365
+        },
+        "SHORT": {
+          "analysed": 183,
+          "mean_net_r": 0.15897025136612022,
+          "win_rate": 0.3551912568306011
+        }
+      },
+      "mean_cost_share_r": 0.04849063509749303,
+      "level": "L3",
+      "tf": "M15",
+      "window": "FULL",
+      "r": 3,
+      "holm_significant": false,
+      "classification": "OPEN"
+    },
+    "L3|M15|NY|R1": {
+      "events": 111,
+      "orders": 111,
+      "fills": 111,
+      "fill_rate": 1.0,
+      "analysed": 111,
+      "independent_days": 77,
+      "win_rate": 0.4144144144144144,
+      "mean_net_r": -0.1458176126126126,
+      "total_net_r": -16.185755,
+      "upper95_mean_net_r": 0.019143973684210527,
+      "p_value": 0.9241,
+      "mean_s0_pips": 5.222522522522523,
+      "mean_commission_r": 0.004798495495495496,
+      "mean_s0_r": 0.03316110810810811,
+      "states": {
+        "FILLED": 84,
+        "FILLED_AT_PLACEMENT": 27
+      },
+      "exit_reasons": {
+        "SESSION_CLOSE": 14,
+        "SL": 56,
+        "TP": 41
+      },
+      "by_side": {
+        "LONG": {
+          "analysed": 51,
+          "mean_net_r": -0.2503995882352941,
+          "win_rate": 0.35294117647058826
+        },
+        "SHORT": {
+          "analysed": 60,
+          "mean_net_r": -0.056922933333333335,
+          "win_rate": 0.4666666666666667
+        }
+      },
+      "mean_cost_share_r": 0.037959603603603606,
+      "level": "L3",
+      "tf": "M15",
+      "window": "NY",
+      "r": 1,
+      "holm_significant": false,
+      "classification": "OPEN"
+    },
+    "L3|M15|NY|R2": {
+      "events": 111,
+      "orders": 111,
+      "fills": 111,
+      "fill_rate": 1.0,
+      "analysed": 111,
+      "independent_days": 77,
+      "win_rate": 0.34234234234234234,
+      "mean_net_r": -0.1442296036036036,
+      "total_net_r": -16.009486,
+      "upper95_mean_net_r": 0.04900388135593221,
+      "p_value": 0.8892,
+      "mean_s0_pips": 5.222522522522523,
+      "mean_commission_r": 0.004798495495495496,
+      "mean_s0_r": 0.03316110810810811,
+      "states": {
+        "FILLED": 84,
+        "FILLED_AT_PLACEMENT": 27
+      },
+      "exit_reasons": {
+        "SESSION_CLOSE": 34,
+        "SL": 61,
+        "TP": 16
+      },
+      "by_side": {
+        "LONG": {
+          "analysed": 51,
+          "mean_net_r": -0.27173554901960784,
+          "win_rate": 0.2549019607843137
+        },
+        "SHORT": {
+          "analysed": 60,
+          "mean_net_r": -0.03584955,
+          "win_rate": 0.4166666666666667
+        }
+      },
+      "mean_cost_share_r": 0.037959603603603606,
+      "level": "L3",
+      "tf": "M15",
+      "window": "NY",
+      "r": 2,
+      "holm_significant": false,
+      "classification": "OPEN"
+    },
+    "L3|M15|NY|R3": {
+      "events": 111,
+      "orders": 111,
+      "fills": 111,
+      "fill_rate": 1.0,
+      "analysed": 111,
+      "independent_days": 77,
+      "win_rate": 0.3333333333333333,
+      "mean_net_r": -0.12953885585585587,
+      "total_net_r": -14.378813000000001,
+      "upper95_mean_net_r": 0.0757847647058824,
+      "p_value": 0.8532,
+      "mean_s0_pips": 5.222522522522523,
+      "mean_commission_r": 0.004798495495495496,
+      "mean_s0_r": 0.03316110810810811,
+      "states": {
+        "FILLED": 84,
+        "FILLED_AT_PLACEMENT": 27
+      },
+      "exit_reasons": {
+        "SESSION_CLOSE": 40,
+        "SL": 62,
+        "TP": 9
+      },
+      "by_side": {
+        "LONG": {
+          "analysed": 51,
+          "mean_net_r": -0.27064992156862744,
+          "win_rate": 0.23529411764705882
+        },
+        "SHORT": {
+          "analysed": 60,
+          "mean_net_r": -0.009594450000000001,
+          "win_rate": 0.4166666666666667
+        }
+      },
+      "mean_cost_share_r": 0.037959603603603606,
+      "level": "L3",
+      "tf": "M15",
+      "window": "NY",
+      "r": 3,
+      "holm_significant": false,
+      "classification": "OPEN"
+    },
+    "L4|M5|FULL|R1": {
+      "events": 54,
+      "orders": 54,
+      "fills": 52,
+      "fill_rate": 0.9629629629629629,
+      "analysed": 52,
+      "independent_days": 43,
+      "win_rate": 0.36538461538461536,
+      "mean_net_r": -0.282802,
+      "total_net_r": -14.705704,
+      "upper95_mean_net_r": -0.07049188235294117,
+      "p_value": 0.9858,
+      "mean_s0_pips": 5.709615384615384,
+      "mean_commission_r": 0.014490673076923078,
+      "mean_s0_r": 0.10530909615384615,
+      "states": {
+        "FILLED": 40,
+        "FILLED_AT_PLACEMENT": 12,
+        "MISSED_TP_FIRST": 2
+      },
+      "exit_reasons": {
+        "SESSION_CLOSE": 1,
+        "SL": 33,
+        "TP": 18
+      },
+      "by_side": {
+        "LONG": {
+          "analysed": 25,
+          "mean_net_r": -0.5386109600000001,
+          "win_rate": 0.24
+        },
+        "SHORT": {
+          "analysed": 27,
+          "mean_net_r": -0.04594185185185186,
+          "win_rate": 0.48148148148148145
+        }
+      },
+      "mean_cost_share_r": 0.11979976923076922,
+      "level": "L4",
+      "tf": "M5",
+      "window": "FULL",
+      "r": 1,
+      "holm_significant": false,
+      "classification": "INCONCLUSIVE_LOW_N"
+    },
+    "L4|M5|FULL|R2": {
+      "events": 54,
+      "orders": 54,
+      "fills": 52,
+      "fill_rate": 0.9629629629629629,
+      "analysed": 52,
+      "independent_days": 43,
+      "win_rate": 0.2692307692307692,
+      "mean_net_r": -0.2254438076923077,
+      "total_net_r": -11.723078000000001,
+      "upper95_mean_net_r": 0.06873726000000002,
+      "p_value": 0.8985,
+      "mean_s0_pips": 5.709615384615384,
+      "mean_commission_r": 0.014490673076923078,
+      "mean_s0_r": 0.10530909615384615,
+      "states": {
+        "EXPIRED_12_BARS": 1,
+        "FILLED": 40,
+        "FILLED_AT_PLACEMENT": 12,
+        "MISSED_TP_FIRST": 1
+      },
+      "exit_reasons": {
+        "SESSION_CLOSE": 1,
+        "SL": 38,
+        "TP": 13
+      },
+      "by_side": {
+        "LONG": {
+          "analysed": 25,
+          "mean_net_r": -0.45871639999999997,
+          "win_rate": 0.2
+        },
+        "SHORT": {
+          "analysed": 27,
+          "mean_net_r": -0.009450666666666677,
+          "win_rate": 0.3333333333333333
+        }
+      },
+      "mean_cost_share_r": 0.11979976923076922,
+      "level": "L4",
+      "tf": "M5",
+      "window": "FULL",
+      "r": 2,
+      "holm_significant": false,
+      "classification": "INCONCLUSIVE_LOW_N"
+    },
+    "L4|M5|FULL|R3": {
+      "events": 54,
+      "orders": 54,
+      "fills": 52,
+      "fill_rate": 0.9629629629629629,
+      "analysed": 52,
+      "independent_days": 43,
+      "win_rate": 0.25,
+      "mean_net_r": -0.08396965384615385,
+      "total_net_r": -4.366422,
+      "upper95_mean_net_r": 0.27456474,
+      "p_value": 0.6607,
+      "mean_s0_pips": 5.709615384615384,
+      "mean_commission_r": 0.014490673076923078,
+      "mean_s0_r": 0.10530909615384615,
+      "states": {
+        "EXPIRED_12_BARS": 2,
+        "FILLED": 40,
+        "FILLED_AT_PLACEMENT": 12
+      },
+      "exit_reasons": {
+        "SESSION_CLOSE": 2,
+        "SL": 39,
+        "TP": 11
+      },
+      "by_side": {
+        "LONG": {
+          "analysed": 25,
+          "mean_net_r": -0.45922856,
+          "win_rate": 0.16
+        },
+        "SHORT": {
+          "analysed": 27,
+          "mean_net_r": 0.2634922962962963,
+          "win_rate": 0.3333333333333333
+        }
+      },
+      "mean_cost_share_r": 0.11979976923076922,
+      "level": "L4",
+      "tf": "M5",
+      "window": "FULL",
+      "r": 3,
+      "holm_significant": false,
+      "classification": "INCONCLUSIVE_LOW_N"
+    },
+    "L4|M5|NY|R1": {
+      "events": 9,
+      "orders": 9,
+      "fills": 9,
+      "fill_rate": 1.0,
+      "analysed": 9,
+      "independent_days": 8,
+      "win_rate": 0.3333333333333333,
+      "mean_net_r": -0.3588987777777778,
+      "total_net_r": -3.230089,
+      "upper95_mean_net_r": 0.23866049999999997,
+      "p_value": 0.867,
+      "mean_s0_pips": 6.455555555555556,
+      "mean_commission_r": 0.013448555555555556,
+      "mean_s0_r": 0.11258244444444444,
+      "states": {
+        "FILLED": 7,
+        "FILLED_AT_PLACEMENT": 2
+      },
+      "exit_reasons": {
+        "SESSION_CLOSE": 1,
+        "SL": 6,
+        "TP": 2
+      },
+      "by_side": {
+        "LONG": {
+          "analysed": 5,
+          "mean_net_r": -0.6446462000000001,
+          "win_rate": 0.2
+        },
+        "SHORT": {
+          "analysed": 4,
+          "mean_net_r": -0.0017145000000000077,
+          "win_rate": 0.5
+        }
+      },
+      "mean_cost_share_r": 0.126031,
+      "level": "L4",
+      "tf": "M5",
+      "window": "NY",
+      "r": 1,
+      "holm_significant": false,
+      "classification": "INCONCLUSIVE_LOW_N"
+    },
+    "L4|M5|NY|R2": {
+      "events": 9,
+      "orders": 9,
+      "fills": 9,
+      "fill_rate": 1.0,
+      "analysed": 9,
+      "independent_days": 8,
+      "win_rate": 0.3333333333333333,
+      "mean_net_r": -0.13663244444444447,
+      "total_net_r": -1.2296920000000002,
+      "upper95_mean_net_r": 0.7381094999999999,
+      "p_value": 0.6436,
+      "mean_s0_pips": 6.455555555555556,
+      "mean_commission_r": 0.013448555555555556,
+      "mean_s0_r": 0.11258244444444444,
+      "states": {
+        "FILLED": 7,
+        "FILLED_AT_PLACEMENT": 2
+      },
+      "exit_reasons": {
+        "SESSION_CLOSE": 1,
+        "SL": 6,
+        "TP": 2
+      },
+      "by_side": {
+        "LONG": {
+          "analysed": 5,
+          "mean_net_r": -0.6446462000000001,
+          "win_rate": 0.2
+        },
+        "SHORT": {
+          "analysed": 4,
+          "mean_net_r": 0.49838474999999993,
+          "win_rate": 0.5
+        }
+      },
+      "mean_cost_share_r": 0.126031,
+      "level": "L4",
+      "tf": "M5",
+      "window": "NY",
+      "r": 2,
+      "holm_significant": false,
+      "classification": "INCONCLUSIVE_LOW_N"
+    },
+    "L4|M5|NY|R3": {
+      "events": 9,
+      "orders": 9,
+      "fills": 9,
+      "fill_rate": 1.0,
+      "analysed": 9,
+      "independent_days": 8,
+      "win_rate": 0.3333333333333333,
+      "mean_net_r": -0.09566000000000001,
+      "total_net_r": -0.86094,
+      "upper95_mean_net_r": 0.8296332500000001,
+      "p_value": 0.5829,
+      "mean_s0_pips": 6.455555555555556,
+      "mean_commission_r": 0.013448555555555556,
+      "mean_s0_r": 0.11258244444444444,
+      "states": {
+        "FILLED": 7,
+        "FILLED_AT_PLACEMENT": 2
+      },
+      "exit_reasons": {
+        "SESSION_CLOSE": 2,
+        "SL": 6,
+        "TP": 1
+      },
+      "by_side": {
+        "LONG": {
+          "analysed": 5,
+          "mean_net_r": -0.6446462000000001,
+          "win_rate": 0.2
+        },
+        "SHORT": {
+          "analysed": 4,
+          "mean_net_r": 0.59057275,
+          "win_rate": 0.5
+        }
+      },
+      "mean_cost_share_r": 0.126031,
+      "level": "L4",
+      "tf": "M5",
+      "window": "NY",
+      "r": 3,
+      "holm_significant": false,
+      "classification": "INCONCLUSIVE_LOW_N"
+    },
+    "L4|M15|FULL|R1": {
+      "events": 18,
+      "orders": 18,
+      "fills": 18,
+      "fill_rate": 1.0,
+      "analysed": 18,
+      "independent_days": 16,
+      "win_rate": 0.5555555555555556,
+      "mean_net_r": 0.10887977777777774,
+      "total_net_r": 1.9598359999999995,
+      "upper95_mean_net_r": 0.4732337368421052,
+      "p_value": 0.3645,
+      "mean_s0_pips": 5.938888888888889,
+      "mean_commission_r": 0.005725222222222223,
+      "mean_s0_r": 0.044893333333333334,
+      "states": {
+        "FILLED": 14,
+        "FILLED_AT_PLACEMENT": 4
+      },
+      "exit_reasons": {
+        "SL": 8,
+        "TP": 10
+      },
+      "by_side": {
+        "LONG": {
+          "analysed": 10,
+          "mean_net_r": -0.20396350000000005,
+          "win_rate": 0.4
+        },
+        "SHORT": {
+          "analysed": 8,
+          "mean_net_r": 0.49993387499999997,
+          "win_rate": 0.75
+        }
+      },
+      "mean_cost_share_r": 0.050618555555555556,
+      "level": "L4",
+      "tf": "M15",
+      "window": "FULL",
+      "r": 1,
+      "holm_significant": false,
+      "classification": "INCONCLUSIVE_LOW_N"
+    },
+    "L4|M15|FULL|R2": {
+      "events": 18,
+      "orders": 18,
+      "fills": 18,
+      "fill_rate": 1.0,
+      "analysed": 18,
+      "independent_days": 16,
+      "win_rate": 0.3888888888888889,
+      "mean_net_r": 0.028721444444444424,
+      "total_net_r": 0.5169859999999996,
+      "upper95_mean_net_r": 0.6069194210526316,
+      "p_value": 0.4818,
+      "mean_s0_pips": 5.938888888888889,
+      "mean_commission_r": 0.005725222222222223,
+      "mean_s0_r": 0.044893333333333334,
+      "states": {
+        "FILLED": 14,
+        "FILLED_AT_PLACEMENT": 4
+      },
+      "exit_reasons": {
+        "SESSION_CLOSE": 2,
+        "SL": 11,
+        "TP": 5
+      },
+      "by_side": {
+        "LONG": {
+          "analysed": 10,
+          "mean_net_r": -0.2309367,
+          "win_rate": 0.3
+        },
+        "SHORT": {
+          "analysed": 8,
+          "mean_net_r": 0.35329412499999996,
+          "win_rate": 0.5
+        }
+      },
+      "mean_cost_share_r": 0.050618555555555556,
+      "level": "L4",
+      "tf": "M15",
+      "window": "FULL",
+      "r": 2,
+      "holm_significant": false,
+      "classification": "INCONCLUSIVE_LOW_N"
+    },
+    "L4|M15|FULL|R3": {
+      "events": 18,
+      "orders": 18,
+      "fills": 18,
+      "fill_rate": 1.0,
+      "analysed": 18,
+      "independent_days": 16,
+      "win_rate": 0.3333333333333333,
+      "mean_net_r": -0.07627733333333334,
+      "total_net_r": -1.372992,
+      "upper95_mean_net_r": 0.5585618823529412,
+      "p_value": 0.6074,
+      "mean_s0_pips": 5.938888888888889,
+      "mean_commission_r": 0.005725222222222223,
+      "mean_s0_r": 0.044893333333333334,
+      "states": {
+        "FILLED": 14,
+        "FILLED_AT_PLACEMENT": 4
+      },
+      "exit_reasons": {
+        "SESSION_CLOSE": 3,
+        "SL": 12,
+        "TP": 3
+      },
+      "by_side": {
+        "LONG": {
+          "analysed": 10,
+          "mean_net_r": -0.318897,
+          "win_rate": 0.3
+        },
+        "SHORT": {
+          "analysed": 8,
+          "mean_net_r": 0.22699724999999998,
+          "win_rate": 0.375
+        }
+      },
+      "mean_cost_share_r": 0.050618555555555556,
+      "level": "L4",
+      "tf": "M15",
+      "window": "FULL",
+      "r": 3,
+      "holm_significant": false,
+      "classification": "INCONCLUSIVE_LOW_N"
+    },
+    "L4|M15|NY|R1": {
+      "events": 3,
+      "orders": 3,
+      "fills": 3,
+      "fill_rate": 1.0,
+      "analysed": 3,
+      "independent_days": 3,
+      "win_rate": 1.0,
+      "mean_net_r": 1.0002926666666667,
+      "total_net_r": 3.000878,
+      "upper95_mean_net_r": 1.000448,
+      "p_value": 0.0,
+      "mean_s0_pips": 4.666666666666667,
+      "mean_commission_r": 0.004029666666666667,
+      "mean_s0_r": 0.023928666666666668,
+      "states": {
+        "FILLED": 2,
+        "FILLED_AT_PLACEMENT": 1
+      },
+      "exit_reasons": {
+        "TP": 3
+      },
+      "by_side": {
+        "LONG": {
+          "analysed": 1,
+          "mean_net_r": 1.000152,
+          "win_rate": 1.0
+        },
+        "SHORT": {
+          "analysed": 2,
+          "mean_net_r": 1.0003630000000001,
+          "win_rate": 1.0
+        }
+      },
+      "mean_cost_share_r": 0.027958333333333335,
+      "level": "L4",
+      "tf": "M15",
+      "window": "NY",
+      "r": 1,
+      "holm_significant": true,
+      "classification": "INCONCLUSIVE_LOW_N"
+    },
+    "L4|M15|NY|R2": {
+      "events": 3,
+      "orders": 3,
+      "fills": 3,
+      "fill_rate": 1.0,
+      "analysed": 3,
+      "independent_days": 3,
+      "win_rate": 0.6666666666666666,
+      "mean_net_r": 0.18977133333333332,
+      "total_net_r": 0.569314,
+      "upper95_mean_net_r": 0.7997043333333332,
+      "p_value": 0.2599,
+      "mean_s0_pips": 4.666666666666667,
+      "mean_commission_r": 0.004029666666666667,
+      "mean_s0_r": 0.023928666666666668,
+      "states": {
+        "FILLED": 2,
+        "FILLED_AT_PLACEMENT": 1
+      },
+      "exit_reasons": {
+        "SESSION_CLOSE": 2,
+        "SL": 1
+      },
+      "by_side": {
+        "LONG": {
+          "analysed": 1,
+          "mean_net_r": 0.739515,
+          "win_rate": 1.0
+        },
+        "SHORT": {
+          "analysed": 2,
+          "mean_net_r": -0.08510050000000002,
+          "win_rate": 0.5
+        }
+      },
+      "mean_cost_share_r": 0.027958333333333335,
+      "level": "L4",
+      "tf": "M15",
+      "window": "NY",
+      "r": 2,
+      "holm_significant": false,
+      "classification": "INCONCLUSIVE_LOW_N"
+    },
+    "L4|M15|NY|R3": {
+      "events": 3,
+      "orders": 3,
+      "fills": 3,
+      "fill_rate": 1.0,
+      "analysed": 3,
+      "independent_days": 3,
+      "win_rate": 0.6666666666666666,
+      "mean_net_r": 0.18977133333333332,
+      "total_net_r": 0.569314,
+      "upper95_mean_net_r": 0.7997043333333332,
+      "p_value": 0.2599,
+      "mean_s0_pips": 4.666666666666667,
+      "mean_commission_r": 0.004029666666666667,
+      "mean_s0_r": 0.023928666666666668,
+      "states": {
+        "FILLED": 2,
+        "FILLED_AT_PLACEMENT": 1
+      },
+      "exit_reasons": {
+        "SESSION_CLOSE": 2,
+        "SL": 1
+      },
+      "by_side": {
+        "LONG": {
+          "analysed": 1,
+          "mean_net_r": 0.739515,
+          "win_rate": 1.0
+        },
+        "SHORT": {
+          "analysed": 2,
+          "mean_net_r": -0.08510050000000002,
+          "win_rate": 0.5
+        }
+      },
+      "mean_cost_share_r": 0.027958333333333335,
+      "level": "L4",
+      "tf": "M15",
+      "window": "NY",
+      "r": 3,
+      "holm_significant": false,
+      "classification": "INCONCLUSIVE_LOW_N"
+    }
+  },
+  "summary": {
+    "timeframes": {
+      "M5": {
+        "event_rows": 805,
+        "events_in_full": 679,
+        "event_status": {
+          "EVENT": 771,
+          "OPEN_BEYOND_LEVEL": 33,
+          "WARMUP": 1
+        },
+        "mean_entry_spread_s0_pips": 5.68379970544919,
+        "fill_rate_r1": 0.9617083946980854
+      },
+      "M15": {
+        "event_rows": 691,
+        "events_in_full": 575,
+        "event_status": {
+          "EVENT": 662,
+          "OPEN_BEYOND_LEVEL": 29
+        },
+        "mean_entry_spread_s0_pips": 5.6615652173913045,
+        "fill_rate_r1": 0.9756521739130435
+      }
+    },
+    "days": {
+      "NORMAL": 126,
+      "WARMUP": 1
+    },
+    "mean_reference_spread_pts": 53.25396825396825
+  },
+  "experiment_id": "BTB-RUN",
+  "data_gate": "DATA-PASSED",
+  "non_default_inputs": [
+    "CodeCommitSHA",
+    "RoadmapSHA256"
+  ],
+  "classification_counts": {
+    "INCONCLUSIVE_LOW_N": 30,
+    "NEGATIVE": 8,
+    "OPEN": 10
+  }
+}

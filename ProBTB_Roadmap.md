@@ -2,7 +2,7 @@
 
 Owner repository: `https://github.com/artaveo/ProBTB-STR_Expert` · owner folder `E:\Trade\ProBTB-STR_Expert` · commits go straight to `main` (no branches, no PRs).
 
-Status: **BTB-1, BTB-2 and BTB-3 are implemented together**, split between two sessions (owner decision 2026-09-29). Nothing beyond BTB-3 is authorized. After BTB-3 the owner decides whether to continue.
+Status: **BTB-1, BTB-2 and BTB-3 are COMPLETE** (Step A code 2026-09-29, Step B build and run 2026-09-29; completion records in Section 9, report in `research/btb_run/BTB-RUN/python_reference/report.md`). Nothing beyond BTB-3 is authorized. The owner decides whether to continue.
 
 | Step | Who | What |
 |---|---|---|
@@ -348,6 +348,54 @@ Result: CODE COMPLETE. Step B must install, compile (0 errors / 0 warnings), run
   and the single tester pass, reconcile and report. Check the Section 11 "Step B: check first" items first.
 ```
 
+```
+BTB-1 — COMPLETE
+Date: 2026-09-29
+Step: B (Claude Code desktop session on the owner's machine, MT5 build 6182)
+Files changed: none in MQL5/ or python/ (no compile or test fix was needed); research/btb_run/tests/*
+Summary: TRE engine installed into the MT5 data folder with the BTB files and configs.
+Compile/Tests: MetaEditor CLI, one file at a time: BTB_Tests, BTB_EventReplay, TRE_RawTickAudit, BTB_Expert
+  -> each 0 errors, 0 warnings. BTB_Tests (config/btb_tests.ini): RESULT: PASS passed=363 failed=0 build=6182
+  (ported TRE suites + BTB suites). Python: python -m unittest discover -s tests -> Ran 36 tests, OK.
+  Raw tick audit (config/btb_raw_audit.ini, ScriptParameters honoured): XAUUSD 2026.01.01-2026.07.01,
+  85,119,865 ticks, fallback share 0.19 %, quarantine share 0.20 %, 6 critical gaps all quarantined -> DATA-PASSED.
+Result: PASS. The engine port is compiled and verified in MT5.
+```
+
+```
+BTB-2 — COMPLETE
+Date: 2026-09-29
+Step: B
+Files changed: research/btb_run/BTB-RUN/ (btb_days.csv, btb_events_M5.csv, btb_events_M15.csv, bars_M1_BID.csv, ...)
+Summary: single tester pass (config/btb_tester.ini, BTB_RUN.set with only CodeCommitSHA=2d3effb and
+  RoadmapSHA256 filled): 85,120,384 real ticks, 174,621 M1 bars, test time 59 s. Tester data gate DATA-PASSED
+  (fallback 0.19 %, quarantine 0.19 %). Days: 127 (126 NORMAL, 1 WARMUP, 0 ABNORMAL_SPREAD_DAY),
+  mean reference spread 53.3 points. M5: 34,939 bars, 805 event rows (771 EVENT, 33 OPEN_BEYOND_LEVEL,
+  1 WARMUP). M15: 11,651 bars, 691 event rows (662 EVENT, 29 OPEN_BEYOND_LEVEL).
+Compile/Tests: python -m btb_reference.run_reference -> btb_days.csv (127 rows), btb_events_M5.csv (805),
+  btb_events_M15.csv (691) IDENTICAL -> RECONCILIATION PASS, ledger checksum 15ae8f3a…cbdd.
+  manifest.json: non_default_inputs = [CodeCommitSHA, RoadmapSHA256].
+Result: PASS. Event ledgers byte-identical between MQL5 and the independent Python reference.
+```
+
+```
+BTB-3 — COMPLETE
+Date: 2026-09-29
+Step: B
+Files changed: research/btb_run/BTB-RUN/btb_proxies_M5.csv, btb_proxies_M15.csv,
+  python_reference/report.md, report.json; research/btb_run/README.md
+Summary: proxies M5 2,037 (1,982 filled: 1,403 FILLED + 579 FILLED_AT_PLACEMENT; 45 MISSED_TP_FIRST,
+  10 EXPIRED_12_BARS), M15 1,725 (1,698 filled; 24 MISSED_TP_FIRST, 3 IN_QUARANTINE). No
+  CANCELLED_WINDOW_END and no INVALID_STOP_GEOMETRY. Mean entry spread s0: M5 5.68 pips, M15 5.66 pips.
+  Fill rate (R=1, FULL): M5 0.962, M15 0.976. All FILLED_AT_PLACEMENT rows are SHORT (see closure 32).
+Compile/Tests: python -m btb_reference.study -> 48 cells reported and classified, no cell selected.
+Result: INCONCLUSIVE_LOW_N 30, NEGATIVE 8, OPEN 10, POSITIVE_EVIDENCE 0.
+  NEGATIVE: L3 M5 FULL R1/R2/R3, L3 M5 NY R1/R2/R3, L3 M15 FULL R1, L2 M5 FULL R1.
+  OPEN: L2 M5 FULL R2/R3, L2 M15 FULL R1/R2/R3, L3 M15 FULL R2/R3, L3 M15 NY R1/R2/R3.
+  No cell reaches POSITIVE_EVIDENCE (no p-value survives Holm apart from L4 M15 NY R1, which has 3 fills and
+  is INCONCLUSIVE_LOW_N). The owner decides whether to continue.
+```
+
 ## 10. Operator notes (owner's machine, verified 2026-09-29)
 
 | Item | Value |
@@ -416,6 +464,12 @@ Step A, 2026-09-29. Each item is conservative or follows the LSR engine where th
 
 30. (a) `ScriptParameters=` in `config/btb_raw_audit.ini` (fallback in the Run Card); (b) `.set` files written as ASCII with `;` comments and epoch-second datetimes; (c) `ArraySort` on an `int` array (`BTB_MedianInt`); (d) `static` class methods taking `const TRE_Bar &` (`CBTB_LevelEngine::Crosses/Breaks`); (e) `((long)1) << 31` and long arithmetic in the test fixture; (f) calling a non-const virtual `Overlaps` through a reference parameter inside `const` methods (`WrittenStatus`, `WrittenState`); (g) date literals with seconds (`D'2026.01.07 10:04:59'`); (h) public data members named `from` / `to` in the test quarantine class; (i) any implicit `datetime`/`int` conversion warnings (target 0 warnings); (j) very long string concatenations in `CBTB_ProxyBook::CsvRow`.
 
+Step B, 2026-09-29.
+
+31. Items 30 (a)–(j) resolved without code change: all four programs compiled with 0 errors and 0 warnings on MT5 build 6182, `BTB_Tests` passed 363/363, and `ScriptParameters=` in `config/btb_raw_audit.ini` was honoured (the raw audit wrote to `Common\Files\TRE\BTB-RUN\` with the preset dates). No fix was needed, so no file under `MQL5/` or `python/` changed in Step B.
+32. Entry-fill asymmetry (observation, no change — Section 5.1 is pre-registered): P is the Bid close, a Buy Limit fills on Ask ≤ P and a Sell Limit on Bid ≥ P. A long therefore needs the Bid to fall by at least one spread below the close, while a short fills at placement whenever the Bid has not fallen since the close. In the run all 1,017 `FILLED_AT_PLACEMENT` rows are SHORT and no LONG row is; `MISSED_TP_FIRST` is almost only LONG. Long and short results are reported separately (report.md) and must be read with this in mind.
+33. The manifest's `RoadmapSHA256` (`0b945239…1843`) is the roadmap as it was at the run (commit `2d3effb`), before the Step B records were appended.
+
 ---
 
 # Roadmap Update Log
@@ -431,3 +485,8 @@ Step A, 2026-09-29. Each item is conservative or follows the LSR engine where th
 - Engine ported from LSR `a6ad185` by rename only; rename verification PASS (empty diff).
 - BTB-1..3 written in MQL5 and in the independent Python reference; Python tests pass (36).
 - Closures 1–30 recorded in Section 11; Run Card `docs/BTB_RunCard.md` and Step B configs added.
+
+## 2026-09-29 — Step B: BTB-1, BTB-2, BTB-3 complete
+- Installed into MT5; 4 programs compile 0 errors / 0 warnings; BTB_Tests 363 passed, 0 failed; Python 36 OK.
+- Raw tick audit and tester package DATA-PASSED; single tester pass run; event ledgers byte-identical (RECONCILIATION PASS).
+- 48-cell report: 30 INCONCLUSIVE_LOW_N, 8 NEGATIVE, 10 OPEN, 0 POSITIVE_EVIDENCE. Run packet in `research/btb_run/`. Closures 31–33.

@@ -160,11 +160,13 @@ Copy the package (with `python_reference\`) to `$Repo\research\btb_run\BTB-RUN\`
 
 ## 9. Gate checklist
 
-- [ ] 4 programs compile: 0 errors, 0 warnings
-- [ ] `btb_tests.txt`: `RESULT: PASS ... failed=0`
-- [ ] Python tests: OK
-- [ ] Raw audit and tester package: `DATA-PASSED`
-- [ ] `manifest.json` → `inputs.non_default_inputs` lists only `CodeCommitSHA` and `RoadmapSHA256`
-- [ ] `run_reference`: `RECONCILIATION PASS`
-- [ ] `study`: 48 cells reported and classified; no cell selected as best
-- [ ] No data from 2026-07-01 onward used
+Step B, 2026-09-29: all gates passed (evidence in `research/btb_run/`).
+
+- [x] 4 programs compile: 0 errors, 0 warnings
+- [x] `btb_tests.txt`: `RESULT: PASS ... failed=0` (passed=363)
+- [x] Python tests: OK (36)
+- [x] Raw audit and tester package: `DATA-PASSED`
+- [x] `manifest.json` → `inputs.non_default_inputs` lists only `CodeCommitSHA` and `RoadmapSHA256`
+- [x] `run_reference`: `RECONCILIATION PASS`
+- [x] `study`: 48 cells reported and classified; no cell selected as best
+- [x] No data from 2026-07-01 onward used (last processed tick 2026-06-30 23:59:58)

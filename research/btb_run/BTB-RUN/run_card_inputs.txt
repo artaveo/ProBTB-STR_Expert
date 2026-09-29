@@ -1,0 +1,22 @@
+# Exact Inputs — every input; non-default values are marked with *
+  ExperimentId = BTB-RUN
+* CodeCommitSHA = 2d3effb2fe870282a1765f90c00c3884c7dec3a1    (roadmap default: )
+* RoadmapSHA256 = 0b945239802d81ce2f67ff7685b88f65ca9dad65deef5ca9a7468a038bd81843    (roadmap default: )
+  AuditRequestedStartDate = 2026-01-01
+  AuditRequestedEndDate = 2026-06-30
+  ClosedMarketCalendarFile = 
+  DataQuarantineFile = 
+  StrategyPipSize = 0.1
+  CommissionRatePercent = 0.0016
+  CostScheduleDate = 2026-09-28
+  ExportReferenceBars = true
+  SignalTimeframes = M5,M15
+  SignalBarPriceSource = BID
+  StopExecutionProfile = LIVE_NATIVE_STOP
+  EntryMode = MODE1_LIMIT_AT_BREAKOUT_CLOSE
+  RTargets = 1,2,3
+  Windows = FULL,NY
+  LateBlockStart = 21:30
+  NYWindow = 16:30-21:30
+  SlippageMode = NONE
+  FixedExecutionDelayMs = 0

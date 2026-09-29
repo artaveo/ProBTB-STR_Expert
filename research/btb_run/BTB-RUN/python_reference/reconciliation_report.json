@@ -1,0 +1,35 @@
+{
+  "contract_id": "BTB-EVENTS-PROXIES-2026-09-29",
+  "package": "C:\\Users\\zakir_ip1m5wj\\AppData\\Roaming\\MetaQuotes\\Terminal\\Common\\Files\\BTB\\BTB-RUN",
+  "m1_bars": 174621,
+  "python_version": "3.12.10",
+  "ledgers": {
+    "btb_days.csv": {
+      "mql5_rows": 127,
+      "python_rows": 127,
+      "identical": true,
+      "first_mismatches": [],
+      "mql5_sha256": "69ca60d39d925a8ac7d803a3cb42f88998157806631961340deb6b22b3c65969",
+      "python_sha256": "69ca60d39d925a8ac7d803a3cb42f88998157806631961340deb6b22b3c65969"
+    },
+    "btb_events_M5.csv": {
+      "mql5_rows": 805,
+      "python_rows": 805,
+      "identical": true,
+      "first_mismatches": [],
+      "mql5_sha256": "63b9cee686844fe50b650219cf53c8f356ed0e0d674959c4b11b445233621a00",
+      "python_sha256": "63b9cee686844fe50b650219cf53c8f356ed0e0d674959c4b11b445233621a00"
+    },
+    "btb_events_M15.csv": {
+      "mql5_rows": 691,
+      "python_rows": 691,
+      "identical": true,
+      "first_mismatches": [],
+      "mql5_sha256": "4fe2d751bc657b3a5402e6b81dadd3a84523ae28e2ca15ad58a98492c0b1c93b",
+      "python_sha256": "4fe2d751bc657b3a5402e6b81dadd3a84523ae28e2ca15ad58a98492c0b1c93b"
+    }
+  },
+  "result": "PASS",
+  "python_ledger_checksum": "15ae8f3a894752a8ecaec9217abc5b48057eec2d0f6e7ee5249a7026b9b2cbdd",
+  "elapsed_seconds": 4.0
+}
