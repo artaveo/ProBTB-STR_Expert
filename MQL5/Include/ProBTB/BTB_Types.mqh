@@ -13,6 +13,7 @@
 #include "../TickResearchEngine/TRE_Sessions.mqh"
 
 #define BTB_CONTRACT_ID            "BTB-EVENTS-PROXIES-2026-09-29"
+#define BTB_V2_CONTRACT_ID         "BTB-V2-E1-E2-2026-09-30"
 #define BTB_ROADMAP_FILENAME       "ProBTB_Roadmap.md"
 #define BTB_OUTPUT_ROOT            "BTB"
 #define BTB_ID_HEX_CHARS           16
@@ -42,6 +43,17 @@
 
 #define BTB_LONG                   1
 #define BTB_SHORT                  -1
+
+//--- PART 2 (BTB-v2): sample split and the pre-registered E1/E2 parameters (roadmap V1, V5)
+#define BTB_HOLDOUT_START          D'2026.07.01'     // break-candle date on/after this = HOLDOUT
+#define BTB_E1_MAX_DEPS            3
+#define BTB_E1_DEP_D_LIST          "1.0,1.5,2.0"     // D = 1.0 primary; 1.5 and 2.0 secondary
+#define BTB_E2_ZIGZAG_ATR          1.0
+#define BTB_E2_SPIKE_ATR           2.0
+#define BTB_E2_SPIKE_BARS          3
+#define BTB_E2_LINE_TOL_ATR        0.5
+#define BTB_E2_MAX_DAYS            3
+#define BTB_E2_MIN_LEGS            3
 
 //--- Window flags (Section 3.3); an event carries both.
 #define BTB_WINDOW_FULL            1
@@ -83,7 +95,35 @@ enum ENUM_BTB_PROXY_STATE
    BTB_PX_CANCELLED_WINDOW_END    = 6,
    BTB_PX_INVALID_STOP_GEOMETRY   = 7,
    BTB_PX_NOT_PLACED_END_OF_DATA  = 8,
-   BTB_PX_NOT_FILLED_END_OF_DATA  = 9
+   BTB_PX_NOT_FILLED_END_OF_DATA  = 9,
+   //--- PART 2 (E1 / E2)
+   BTB_PX_WAIT_ARM                = 10,  // internal: E1 before arming
+   BTB_PX_INVALIDATED_BEFORE_ARM  = 11,
+   BTB_PX_INVALIDATED_BEFORE_FILL = 12,
+   BTB_PX_NOT_ARMED_WINDOW_END    = 13,
+   BTB_PX_NOT_ARMED_END_OF_DATA   = 14,
+   BTB_PX_WAIT_LIVE               = 15,  // internal: E2 before the first live tick
+   BTB_PX_SETUP_ENDED             = 16   // E2: setup ended without a fill (ledger shows why)
+  };
+
+enum ENUM_BTB_MODE
+  {
+   BTB_MODE_E0 = 0,   // Part 1: limit at the breakout close from the first tick after it
+   BTB_MODE_E1 = 1,   // departure D x risk first, then the limit
+   BTB_MODE_E2 = 2    // three legs, spike, pushes along a trend line into the breakeven
+  };
+
+enum ENUM_BTB_E2_STATUS
+  {
+   BTB_E2_OPEN                    = 0,   // internal: not decided yet
+   BTB_E2_LIVE_TO_FILL            = 1,
+   BTB_E2_STRUCTURE_FAILED        = 2,
+   BTB_E2_NO_SPIKE                = 3,
+   BTB_E2_LINE_PASSED             = 4,
+   BTB_E2_EXPIRED_3_DAYS          = 5,
+   BTB_E2_INVALIDATED_BEFORE_FILL = 6,
+   BTB_E2_NO_LEG1                 = 7,
+   BTB_E2_END_OF_DATA             = 8
   };
 
 enum ENUM_BTB_EXIT_REASON
@@ -154,8 +194,110 @@ string BTB_ProxyStateName(const int s, const bool atPlacement)
       case BTB_PX_INVALID_STOP_GEOMETRY:  return "INVALID_STOP_GEOMETRY";
       case BTB_PX_NOT_PLACED_END_OF_DATA: return "NOT_PLACED_END_OF_DATA";
       case BTB_PX_NOT_FILLED_END_OF_DATA: return "NOT_FILLED_END_OF_DATA";
+      case BTB_PX_WAIT_ARM:               return "WAIT_ARM";
+      case BTB_PX_INVALIDATED_BEFORE_ARM: return "INVALIDATED_BEFORE_ARM";
+      case BTB_PX_INVALIDATED_BEFORE_FILL: return "INVALIDATED_BEFORE_FILL";
+      case BTB_PX_NOT_ARMED_WINDOW_END:   return "NOT_ARMED_WINDOW_END";
+      case BTB_PX_NOT_ARMED_END_OF_DATA:  return "NOT_ARMED_END_OF_DATA";
+      case BTB_PX_WAIT_LIVE:              return "WAIT_LIVE";
+      case BTB_PX_SETUP_ENDED:            return "SETUP_ENDED";
      }
    return "UNKNOWN";
+  }
+
+string BTB_ModeName(const int m)
+  {
+   switch(m)
+     {
+      case BTB_MODE_E0: return "E0";
+      case BTB_MODE_E1: return "E1";
+      case BTB_MODE_E2: return "E2";
+     }
+   return "UNKNOWN";
+  }
+
+string BTB_E2StatusName(const int s)
+  {
+   switch(s)
+     {
+      case BTB_E2_OPEN:                    return "OPEN";
+      case BTB_E2_LIVE_TO_FILL:            return "LIVE_TO_FILL";
+      case BTB_E2_STRUCTURE_FAILED:        return "STRUCTURE_FAILED";
+      case BTB_E2_NO_SPIKE:                return "NO_SPIKE";
+      case BTB_E2_LINE_PASSED:             return "LINE_PASSED";
+      case BTB_E2_EXPIRED_3_DAYS:          return "EXPIRED_3_DAYS";
+      case BTB_E2_INVALIDATED_BEFORE_FILL: return "INVALIDATED_BEFORE_FILL";
+      case BTB_E2_NO_LEG1:                 return "NO_LEG1";
+      case BTB_E2_END_OF_DATA:             return "END_OF_DATA";
+     }
+   return "UNKNOWN";
+  }
+
+//--- Ledger state of an E2 proxy whose setup ended before a fill: the setup status, except
+//--- LIVE_TO_FILL (P reached on a live bar, but Ask never <= P) and END_OF_DATA.
+string BTB_E2EndStateName(const int e2status)
+  {
+   if(e2status == BTB_E2_LIVE_TO_FILL)
+      return "NOT_FILLED_AT_TOUCH";
+   if(e2status == BTB_E2_END_OF_DATA)
+      return "NOT_FILLED_END_OF_DATA";
+   return BTB_E2StatusName(e2status);
+  }
+
+//--- DESIGN / HOLDOUT by the break candle's date (roadmap V1).
+string BTB_SampleName(const datetime breakBarTime)
+  {
+   return breakBarTime < BTB_HOLDOUT_START ? "DESIGN" : "HOLDOUT";
+  }
+
+//--- Tick-grid alignment and the Part 1 stop (5.2), shared by E1 / E2 geometry.
+double BTB_AlignDown(const double price, const double tick, const int digits)
+  {
+   return NormalizeDouble(MathFloor(price / tick + 1e-9) * tick, digits);
+  }
+
+double BTB_AlignUp(const double price, const double tick, const int digits)
+  {
+   return NormalizeDouble(MathCeil(price / tick - 1e-9) * tick, digits);
+  }
+
+double BTB_StopPrice(const int side, const double barLow, const double barHigh, const double s0, const double tick, const int digits)
+  {
+   return side > 0 ? BTB_AlignDown(barLow - s0, tick, digits) : BTB_AlignUp(barHigh + s0, tick, digits);
+  }
+
+//--- E1 arming price: P +/- D x |P - SL_ref|, aligned away from P (roadmap V2.1-2).
+double BTB_ArmPrice(const int side, const double p, const double slRef, const double d, const double tick, const int digits)
+  {
+   double dep = d * MathAbs(p - slRef);
+   return side > 0 ? BTB_AlignUp(p + dep, tick, digits) : BTB_AlignDown(p - dep, tick, digits);
+  }
+
+//--- "1.0,1.5,2.0" -> {1.0, 1.5, 2.0}; every value > 0, at most BTB_E1_MAX_DEPS.
+bool BTB_ParseDepList(const string text, double &deps[], string &error)
+  {
+   error = "";
+   string parts[];
+   int n = StringSplit(text, ',', parts);
+   if(n < 1 || n > BTB_E1_MAX_DEPS)
+     {
+      error = StringFormat("E1_DepD must list 1..%d values", BTB_E1_MAX_DEPS);
+      return false;
+     }
+   ArrayResize(deps, n);
+   for(int i = 0; i < n; i++)
+     {
+      string v = parts[i];
+      StringTrimLeft(v);
+      StringTrimRight(v);
+      deps[i] = StringToDouble(v);
+      if(!(deps[i] > 0.0))
+        {
+         error = "E1_DepD values must be > 0: '" + text + "'";
+         return false;
+        }
+     }
+   return true;
   }
 
 string BTB_ExitReasonName(const int r)

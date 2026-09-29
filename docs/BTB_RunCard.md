@@ -1,4 +1,6 @@
-# Pro BTB Run Card — BTB-1..3 (Step B)
+# Pro BTB Run Card — BTB-1..3 and BTB-4 (Step B)
+
+**BTB-4 (PART 2, BTB-v2): use Section 10 at the end of this card.** Sections 1–9 are the Part 1 procedure; Section 10 lists only what changes for the v2 pass.
 
 This card is the exact procedure for Step B (roadmap 8B). Step A wrote and pushed the code; nothing here was compiled or run in MT5 yet. All paths are the owner's machine (roadmap 10). The EA never trades.
 
@@ -170,3 +172,77 @@ Step B, 2026-09-29: all gates passed (evidence in `research/btb_run/`).
 - [x] `run_reference`: `RECONCILIATION PASS`
 - [x] `study`: 48 cells reported and classified; no cell selected as best
 - [x] No data from 2026-07-01 onward used (last processed tick 2026-06-30 23:59:58)
+
+## 10. BTB-4 (PART 2, BTB-v2) — the single v2 pass (roadmap V7 Step B)
+
+Step A wrote and pushed the BTB-4 code; nothing was compiled or run in MT5. Sections 2–4 apply unchanged (install, compile the same four programs one at a time, `BTB_Tests`, Python tests). Start with roadmap Section 11 "Step B: check first (BTB-4)".
+
+### 10.1 New and changed files
+
+| Path | Purpose |
+|---|---|
+| `MQL5/Include/ProBTB/BTB_Swings.mqh` | **new**: ZigZag(Z·ATR14) pivots and 2/2 fractals (V3.1) |
+| `MQL5/Include/ProBTB/BTB_Setups.mqh` | **new**: E2 setup state machine (legs, spike, pushes, trend line, live bars) and `btb_setups_E2_<TF>.csv` |
+| `MQL5/Include/ProBTB/BTB_Proxy.mqh` | modes E0/E1/E2 in one book; E1 arming; E2 live-bar gating; 6 new ledger columns |
+| `MQL5/Include/ProBTB/BTB_Types.mqh`, `BTB_Levels.mqh`, `BTB_Engine.mqh` | v2 constants, enums, states and helpers; event bar index |
+| `MQL5/Experts/ProBTB/BTB_Expert.mq5` | version 2.00: E1/E2 inputs, setup ledgers, v2 contract, 36 primary trials |
+| `MQL5/Scripts/ProBTB/BTB_EventReplay.mq5` | also rebuilds the setup ledgers |
+| `MQL5/Scripts/ProBTB/BTB_Tests.mq5` | new suites: swings, trend line, E2 setups (owner chart + variants + short mirrors), E1, E2 proxy |
+| `MQL5/Profiles/Tester/BTB_RUN_V2.set`, `MQL5/Presets/TRE_RawTickAudit_BTB_V2.set` | v2 inputs (`ExperimentId=BTB-V2`, 2026-01-01..2026-09-25) |
+| `config/btb_tester.ini`, `config/btb_raw_audit.ini` | now point to the V2 `.set` files; tester `ToDate=2026.09.26` |
+| `python/btb_reference/swings.py`, `setups.py`, `entries.py` | independent E2 reference (byte-identical setup ledgers) and the E1 arming mirror |
+| `python/btb_reference/regression.py` | E0 regression against the Part 1 package |
+| `python/btb_reference/study.py` | v2 cells, samples, funnel, Holm 36 / 24, holdout verdict (Part 1 packages still give the Part 1 report) |
+| `tools/gen_e2_fixtures.py` | writes the E2 fixture bars into `BTB_Tests.mq5` from `python/tests/btb_v2_fixtures.py` |
+
+`BTB_RUN.set`, `TRE_RawTickAudit_BTB.set` and the Part 1 package in `research/btb_run/` stay as they are (the regression needs them).
+
+### 10.2 Raw tick audit (XAUUSD 2026-01-01..2026-09-25)
+
+```powershell
+Start-Process -FilePath $Term -ArgumentList "/config:`"$Data\config\btb_raw_audit.ini`""
+```
+
+`Common\Files\TRE\BTB-V2\raw_tick_audit_report.json` must show `DATA-PASSED`. Fallback: run `TRE_RawTickAudit` from the Navigator with `ExperimentId=BTB-V2`, dates 2026.01.01 / 2026.09.25.
+
+### 10.3 The single tester pass
+
+Fill `InpCodeCommitSHA` and `InpRoadmapSHA256` in `$Data\MQL5\Profiles\Tester\BTB_RUN_V2.set` (commands in Section 6), then:
+
+```powershell
+Start-Process -FilePath $Term -ArgumentList "/config:`"$Data\config\btb_tester.ini`""
+```
+
+| Setting | Value |
+|---|---|
+| Inputs | `BTB_RUN_V2.set` — every input at its default; only `CodeCommitSHA` and `RoadmapSHA256` are filled |
+| Dates | `2026.01.01` → `2026.09.26` (end exclusive). DESIGN = break date < 2026-07-01, HOLDOUT = from 2026-07-01 |
+| ExperimentId | `BTB-V2` → package in `Common\Files\BTB\BTB-V2\` |
+
+New EA inputs (defaults, pre-registered, roadmap V5): `E1_DepD = 1.0,1.5,2.0` (1.0 primary), `E2_ZigZagATR = 1.0`, `E2_SpikeATR = 2.0`, `E2_SpikeBars = 3`, `E2_LineTolATR = 0.5`, `E2_MaxDays = 3`. `AuditRequestedEndDate` = `2026.09.25` (epoch `1790294400`).
+
+New files in the package: `btb_setups_E2_M5.csv`, `btb_setups_E2_M15.csv`. `btb_proxies_<TF>.csv` has 42 columns (Part 1's 36 + `mode, dep_d, sample, arm_time, n_legs, n_pushes`); per event: E0 × 3 R, E1 × 3 D × 3 R, and E2 × 3 R when the event entered E2.
+
+### 10.4 Checks and report
+
+```powershell
+cd "$Repo\python"
+& $Py -m btb_reference.run_reference "$Common\BTB\BTB-V2"          # days, events AND setup ledgers: RECONCILIATION PASS
+& $Py -m btb_reference.regression "$Common\BTB\BTB-V2" "$Repo\research\btb_run\BTB-RUN"   # E0 regression: must exit 0
+& $Py -m btb_reference.study "$Common\BTB\BTB-V2"                  # v2 report: python_reference\report.md + report.json
+```
+
+The regression compares the DESIGN days, the DESIGN events and the E0 DESIGN proxy rows (first 36 columns) with Part 1 line by line and writes `python_reference\regression_report.json`. Optional replay cross-check as in Section 8 with `InpFolder=BTB\BTB-V2` (the replay also writes the setup ledgers).
+
+Copy the package (with `python_reference\`) to `$Repo\research\btb_v2\BTB-V2\`; compress any ledger over 50 MB.
+
+### 10.5 Gate checklist (BTB-4)
+
+- [ ] 4 programs compile: 0 errors, 0 warnings
+- [ ] `btb_tests.txt`: `RESULT: PASS ... failed=0` (includes the owner-chart E2 test)
+- [ ] Python tests: OK
+- [ ] Raw audit and tester package: `DATA-PASSED` for 2026-01-01..2026-09-25
+- [ ] `manifest.json` → `inputs.non_default_inputs` lists only `CodeCommitSHA` and `RoadmapSHA256`
+- [ ] `run_reference`: `RECONCILIATION PASS` (days, events, setups)
+- [ ] `regression`: E0 DESIGN identical to Part 1
+- [ ] `study`: 36 primary cells with DESIGN and HOLDOUT side by side, HOLDOUT verdicts, E2 funnel; no cell selected as best

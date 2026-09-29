@@ -1,0 +1,6 @@
+; TRE_RawTickAudit for the BTB-4 run: XAUUSD 2026.01.01 - 2026.09.25 (inclusive), BID bars
+InpExperimentId=BTB-V2
+InpAuditRequestedStartDate=1767225600
+InpAuditRequestedEndDate=1790294400
+InpClosedMarketCalendarFile=
+InpSignalBarPriceSource=0

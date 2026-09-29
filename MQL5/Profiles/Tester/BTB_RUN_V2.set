@@ -1,0 +1,20 @@
+; BTB_Expert BTB-4 (PART 2) - every input at its roadmap default, ExperimentId=BTB-V2
+; datetime inputs are epoch seconds: 1767225600 = 2026.01.01, 1790294400 = 2026.09.25 (inclusive end date; tester ToDate 2026.09.26)
+; fill CodeCommitSHA and RoadmapSHA256 before the run (Run Card)
+InpExperimentId=BTB-V2
+InpCodeCommitSHA=
+InpRoadmapSHA256=
+InpAuditRequestedStartDate=1767225600
+InpAuditRequestedEndDate=1790294400
+InpClosedMarketCalendarFile=
+InpDataQuarantineFile=
+InpStrategyPipSize=0.1
+InpCommissionRatePercent=0.0016
+InpCostScheduleDate=2026-09-28
+InpExportReferenceBars=true
+InpE1DepD=1.0,1.5,2.0
+InpE2ZigZagATR=1.0
+InpE2SpikeATR=2.0
+InpE2SpikeBars=3
+InpE2LineTolATR=0.5
+InpE2MaxDays=3

@@ -26,6 +26,7 @@
 #include "../TickResearchEngine/TRE_SymbolSpec.mqh"
 #include "../TickResearchEngine/TRE_Costs.mqh"
 #include "../TickResearchEngine/TRE_Sizing.mqh"
+#include "BTB_Setups.mqh"
 
 struct BTB_ProxyRec
   {
@@ -55,6 +56,19 @@ struct BTB_ProxyRec
    int               exit_reason;
    bool              ambiguous;
    long              end_msc;        // cancel / exit / end time (quarantine overlap)
+   //--- PART 2
+   int               mode;           // ENUM_BTB_MODE
+   double            dep;            // E1: departure multiple D
+   bool              have_ref;       // E1: reference tick seen
+   double            sl_ref;         // E1: stop from the reference tick's spread
+   double            arm_price;      // E1: P +/- D x |P - SL_ref|
+   long              arm_msc;        // E1: arming tick; E2: first live tick (both = placement)
+   int               setup;          // E2: setup index in CBTB_E2Setups
+   int               e2status;       // E2: setup status when it ended without a fill
+   int               n_legs;         // E2
+   int               n_pushes;       // E2
+   bool              fill_full;      // E2: window of the fill (FULL / NY)
+   bool              fill_ny;
   };
 
 //+------------------------------------------------------------------+
@@ -68,6 +82,9 @@ private:
    double            m_pipSize;
    double            m_pointsPerPip;
    double            m_contractSize;
+   double            m_deps[];        // E1 departure multiples (empty = E1 off)
+   CBTB_E2Setups    *m_e2;            // NULL = E2 off
+   int               m_seenSetups;
    BTB_ProxyRec      m_px[];
    int               m_n;
    int               m_live[];
@@ -107,6 +124,18 @@ private:
       m_px[i].exit_reason = BTB_EXIT_NONE;
       m_px[i].ambiguous = false;
       m_px[i].end_msc = 0;
+      m_px[i].mode = BTB_MODE_E0;
+      m_px[i].dep = 0.0;
+      m_px[i].have_ref = false;
+      m_px[i].sl_ref = 0.0;
+      m_px[i].arm_price = 0.0;
+      m_px[i].arm_msc = 0;
+      m_px[i].setup = -1;
+      m_px[i].e2status = BTB_E2_OPEN;
+      m_px[i].n_legs = 0;
+      m_px[i].n_pushes = 0;
+      m_px[i].fill_full = false;
+      m_px[i].fill_ny = false;
       int k = ArraySize(m_live);
       ArrayResize(m_live, k + 1, 256);
       m_live[k] = i;
@@ -143,7 +172,8 @@ private:
      }
 
    //--- Placement tick: limit, live-spread stop, 1R, target (roadmap 5.1–5.3).
-   void              Place(const int i, const TRE_Quote &q)
+   //--- Returns false for INVALID_STOP_GEOMETRY. Shared by E0 (Place), E1 (arming) and E2 (first live tick).
+   bool              ComputeOrder(const int i, const TRE_Quote &q)
      {
       int e = m_px[i].ev;
       int dir = m_px[i].dir;
@@ -168,13 +198,176 @@ private:
          m_px[i].tp = (dir > 0 ? AlignUp(tp) : AlignDown(tp));
          ok = TRE_IsStopDistanceLegal(m_spec, p, m_px[i].tp) && (dir > 0 ? m_px[i].tp > p : m_px[i].tp < p);
         }
-      if(!ok)
+      return ok;
+     }
+
+   //--- E0 placement.
+   void              Place(const int i, const TRE_Quote &q)
+     {
+      if(!ComputeOrder(i, q))
         {
          EndPending(i, BTB_PX_INVALID_STOP_GEOMETRY, q.time_msc);
          return;
         }
       m_px[i].state = BTB_PX_PENDING;
       UpdatePending(i, q, true);
+     }
+
+   void              Fill(const int i, const TRE_Quote &q, const bool placementTick)
+     {
+      int dir = m_px[i].dir;
+      m_px[i].state = BTB_PX_OPEN;
+      m_px[i].at_placement = placementTick;
+      m_px[i].fill_msc = q.time_msc;
+      m_px[i].last_msc = q.time_msc;
+      double px0 = (dir > 0 ? q.bid : q.ask);
+      double fav0 = dir * (px0 - m_px[i].limit);
+      m_px[i].mfe = fav0;
+      m_px[i].mae = MathMax(0.0, -fav0);
+      UpdateOpen(i, q);
+     }
+
+   bool              StopTrigger(const int i, const TRE_Quote &q, const double stop) const
+     {
+      return m_px[i].dir > 0 ? q.bid <= stop : q.ask >= stop;
+     }
+
+   //--- E0 (Part 1, unchanged).
+   void              UpdateE0(const int i, const TRE_Quote &q)
+     {
+      if(m_px[i].state == BTB_PX_WAIT_PLACEMENT)
+        {
+         if(q.time_msc >= m_px[i].due_msc)
+            Place(i, q);
+        }
+      else
+         if(m_px[i].state == BTB_PX_PENDING)
+            UpdatePending(i, q, false);
+         else
+            if(m_px[i].state == BTB_PX_OPEN)
+               UpdateOpen(i, q);
+     }
+
+   //--- E1 (roadmap V2): reference tick, arming at P +/- Dep, then the limit until
+   //--- fill / stop trigger / 21:30. No 12-bar expiry, no MISSED_TP_FIRST.
+   void              UpdateE1(const int i, const TRE_Quote &q)
+     {
+      int dir = m_px[i].dir;
+      if(m_px[i].state == BTB_PX_WAIT_ARM)
+        {
+         if(!m_px[i].have_ref)
+           {
+            if(q.time_msc < m_px[i].due_msc)
+               return;
+            int e = m_px[i].ev;
+            double p = NormalizeDouble(MathRound(m_eng.EventClose(e) / m_spec.tick_size) * m_spec.tick_size, m_spec.digits);
+            m_px[i].sl_ref = BTB_StopPrice(dir, m_eng.EventLow(e), m_eng.EventHigh(e), q.ask - q.bid, m_spec.tick_size, m_spec.digits);
+            m_px[i].arm_price = BTB_ArmPrice(dir, p, m_px[i].sl_ref, m_px[i].dep, m_spec.tick_size, m_spec.digits);
+            m_px[i].have_ref = true;
+           }
+         if(q.time >= m_px[i].window_end)
+           {
+            EndPending(i, BTB_PX_NOT_ARMED_WINDOW_END, q.time_msc);
+            return;
+           }
+         if(StopTrigger(i, q, m_px[i].sl_ref))
+           {
+            EndPending(i, BTB_PX_INVALIDATED_BEFORE_ARM, q.time_msc);
+            return;
+           }
+         if(!(dir > 0 ? q.bid >= m_px[i].arm_price : q.bid <= m_px[i].arm_price))
+            return;
+         m_px[i].arm_msc = q.time_msc;
+         if(!ComputeOrder(i, q))
+           {
+            EndPending(i, BTB_PX_INVALID_STOP_GEOMETRY, q.time_msc);
+            return;
+           }
+         m_px[i].state = BTB_PX_PENDING;
+         UpdatePendingE1(i, q, true);
+         return;
+        }
+      if(m_px[i].state == BTB_PX_PENDING)
+         UpdatePendingE1(i, q, false);
+      else
+         if(m_px[i].state == BTB_PX_OPEN)
+            UpdateOpen(i, q);
+     }
+
+   void              UpdatePendingE1(const int i, const TRE_Quote &q, const bool placementTick)
+     {
+      int dir = m_px[i].dir;
+      if(q.time >= m_px[i].window_end)
+        {
+         EndPending(i, BTB_PX_CANCELLED_WINDOW_END, q.time_msc);
+         return;
+        }
+      if(dir > 0 ? q.ask <= m_px[i].limit : q.bid >= m_px[i].limit)
+        {
+         Fill(i, q, placementTick);
+         return;
+        }
+      if(StopTrigger(i, q, m_px[i].sl))
+         EndPending(i, BTB_PX_INVALIDATED_BEFORE_FILL, q.time_msc);
+     }
+
+   void              EndE2(const int i, const long msc)
+     {
+      m_px[i].e2status = m_e2.Status(m_px[i].setup);
+      m_px[i].n_legs = m_e2.NLegs(m_px[i].setup);
+      m_px[i].n_pushes = m_e2.NPushes(m_px[i].setup);
+      EndPending(i, BTB_PX_SETUP_ENDED, msc);
+     }
+
+   //--- E2 (roadmap V3.4-3.5): live only on the setup's live bars; s0 from the first live tick.
+   void              UpdateE2(const int i, const TRE_Quote &q)
+     {
+      if(m_px[i].state == BTB_PX_OPEN)
+        {
+         UpdateOpen(i, q);
+         return;
+        }
+      int st = m_px[i].setup;
+      if(m_e2.Ended(st))
+        {
+         EndE2(i, q.time_msc);
+         return;
+        }
+      int period = m_eng.Period();
+      bool live = m_e2.TickLive(st, m_e2.BarCount(), q.time - q.time % period);
+      bool placementTick = false;
+      if(m_px[i].state == BTB_PX_WAIT_LIVE)
+        {
+         if(!live)
+            return;
+         m_px[i].arm_msc = q.time_msc;
+         if(!ComputeOrder(i, q))
+           {
+            EndPending(i, BTB_PX_INVALID_STOP_GEOMETRY, q.time_msc);
+            return;
+           }
+         m_px[i].state = BTB_PX_PENDING;
+         placementTick = true;
+        }
+      int dir = m_px[i].dir;
+      if(live && (dir > 0 ? q.ask <= m_px[i].limit : q.bid >= m_px[i].limit))
+        {
+         datetime d = TRE_BrokerDayStart(q.time);
+         m_px[i].window_end = d + BTB_LATE_BLOCK_SEC;
+         m_px[i].fill_full = true;
+         m_px[i].fill_ny = (q.time >= d + BTB_NY_START_SEC);
+         m_px[i].n_legs = m_e2.NLegs(st);
+         m_px[i].n_pushes = m_e2.NPushes(st);
+         Fill(i, q, placementTick);
+         return;
+        }
+      if(StopTrigger(i, q, m_px[i].sl))
+        {
+         m_px[i].e2status = BTB_E2_INVALIDATED_BEFORE_FILL;
+         m_px[i].n_legs = m_e2.NLegs(st);
+         m_px[i].n_pushes = m_e2.NPushes(st);
+         EndPending(i, BTB_PX_SETUP_ENDED, q.time_msc);
+        }
      }
 
    void              UpdatePending(const int i, const TRE_Quote &q, const bool placementTick)
@@ -245,11 +438,18 @@ private:
    string            N(const bool ok, const double v, const int d) const { return ok ? DoubleToString(v, d) : "NA"; }
    string            T(const long msc) const { return msc > 0 ? TRE_IsoTimeMsc(msc) : ""; }
 
+   string            StateText(const int i) const
+     {
+      if(m_px[i].state == BTB_PX_SETUP_ENDED)
+         return BTB_E2EndStateName(m_px[i].e2status);
+      return BTB_ProxyStateName(m_px[i].state, m_px[i].at_placement);
+     }
+
    //--- s0 in strategy pips from whole points (0.30 is 3.0 pips, not 2.999...).
    double            S0Pips(const int i) const { return MathRound(m_px[i].s0 / m_spec.point) / m_pointsPerPip; }
 
 public:
-                     CBTB_ProxyBook(void) { m_eng = NULL; m_econ = NULL; m_n = 0; m_seenEvents = 0; m_haveLast = false; }
+                     CBTB_ProxyBook(void) { m_eng = NULL; m_econ = NULL; m_e2 = NULL; m_n = 0; m_seenEvents = 0; m_seenSetups = 0; m_haveLast = false; }
 
    void              Init(CBTB_LevelEngine *eng, CTRE_SymbolEconomics *econ, const TRE_SymbolSpec &spec,
                           const TRE_CostModel &costs, const double pipSize, const double contractSize)
@@ -268,6 +468,21 @@ public:
       ArrayResize(m_live, 0);
       m_seenEvents = 0;
       m_haveLast = false;
+      ArrayResize(m_deps, 0);
+      m_e2 = NULL;
+      m_seenSetups = 0;
+     }
+
+   //--- PART 2: E1 with the departure multiples deps[] and E2 from the setups of e2
+   //--- (NULL = off). Without this call the book is the Part 1 (E0) book.
+   void              ConfigureV2(const double &deps[], CBTB_E2Setups *e2)
+     {
+      int n = ArraySize(deps);
+      ArrayResize(m_deps, n);
+      for(int d = 0; d < n; d++)
+         m_deps[d] = deps[d];
+      m_e2 = e2;
+      m_seenSetups = 0;
      }
 
    //--- Call after the engine has consumed the current tick (OnM1/OnTime).
@@ -280,8 +495,30 @@ public:
             continue;
          for(int r = 1; r <= BTB_R_COUNT; r++)
             AddProxy(e, r);
+         for(int d = 0; d < ArraySize(m_deps); d++)
+            for(int r = 1; r <= BTB_R_COUNT; r++)
+              {
+               AddProxy(e, r);
+               int i = m_n - 1;
+               m_px[i].mode = BTB_MODE_E1;
+               m_px[i].dep = m_deps[d];
+               m_px[i].state = BTB_PX_WAIT_ARM;
+              }
         }
       m_seenEvents = ne;
+      if(m_e2 == NULL)
+         return;
+      int ns = m_e2.SetupCount();
+      for(int st = m_seenSetups; st < ns; st++)
+         for(int r = 1; r <= BTB_R_COUNT; r++)
+           {
+            AddProxy(m_e2.Event(st), r);
+            int i = m_n - 1;
+            m_px[i].mode = BTB_MODE_E2;
+            m_px[i].setup = st;
+            m_px[i].state = BTB_PX_WAIT_LIVE;
+           }
+      m_seenSetups = ns;
      }
 
    //--- Call for every usable quote, after OnEngineUpdate for that quote.
@@ -294,17 +531,13 @@ public:
          if(k >= ArraySize(m_live))
             continue;
          int i = m_live[k];
-         if(m_px[i].state == BTB_PX_WAIT_PLACEMENT)
-           {
-            if(q.time_msc >= m_px[i].due_msc)
-               Place(i, q);
-           }
+         if(m_px[i].mode == BTB_MODE_E1)
+            UpdateE1(i, q);
          else
-            if(m_px[i].state == BTB_PX_PENDING)
-               UpdatePending(i, q, false);
+            if(m_px[i].mode == BTB_MODE_E2)
+               UpdateE2(i, q);
             else
-               if(m_px[i].state == BTB_PX_OPEN)
-                  UpdateOpen(i, q);
+               UpdateE0(i, q);
         }
      }
 
@@ -320,10 +553,21 @@ public:
          if(m_px[i].state == BTB_PX_OPEN && m_haveLast)
             Close(i, m_last, BTB_EXIT_END_OF_DATA, m_px[i].dir > 0 ? m_last.bid : m_last.ask, false);
          else
-            if(m_px[i].state == BTB_PX_PENDING)
-               EndPending(i, BTB_PX_NOT_FILLED_END_OF_DATA, lastMsc);
+            if(m_px[i].mode == BTB_MODE_E2)
+              {
+               m_px[i].e2status = BTB_E2_END_OF_DATA;
+               m_px[i].n_legs = m_e2.NLegs(m_px[i].setup);
+               m_px[i].n_pushes = m_e2.NPushes(m_px[i].setup);
+               EndPending(i, BTB_PX_SETUP_ENDED, lastMsc);
+              }
             else
-               EndPending(i, m_px[i].state == BTB_PX_WAIT_PLACEMENT ? BTB_PX_NOT_PLACED_END_OF_DATA : BTB_PX_NOT_FILLED_END_OF_DATA, lastMsc);
+               if(m_px[i].mode == BTB_MODE_E1 && m_px[i].state == BTB_PX_WAIT_ARM)
+                  EndPending(i, m_px[i].have_ref ? BTB_PX_NOT_ARMED_END_OF_DATA : BTB_PX_NOT_PLACED_END_OF_DATA, lastMsc);
+               else
+                  if(m_px[i].state == BTB_PX_PENDING)
+                     EndPending(i, BTB_PX_NOT_FILLED_END_OF_DATA, lastMsc);
+                  else
+                     EndPending(i, m_px[i].state == BTB_PX_WAIT_PLACEMENT ? BTB_PX_NOT_PLACED_END_OF_DATA : BTB_PX_NOT_FILLED_END_OF_DATA, lastMsc);
         }
      }
 
@@ -333,7 +577,44 @@ public:
    int               ProxyR(const int i) const { return m_px[i].r; }
    int               ProxyDir(const int i) const { return m_px[i].dir; }
    int               ProxyState(const int i) const { return m_px[i].state; }
-   string            ProxyStateText(const int i) const { return BTB_ProxyStateName(m_px[i].state, m_px[i].at_placement); }
+   string            ProxyStateText(const int i) const { return StateText(i); }
+   int               ProxyMode(const int i) const { return m_px[i].mode; }
+   double            ProxyDep(const int i) const { return m_px[i].dep; }
+   long              ProxyArmMsc(const int i) const { return m_px[i].arm_msc; }
+   double            ProxyArmPrice(const int i) const { return m_px[i].arm_price; }
+   double            ProxySLRef(const int i) const { return m_px[i].sl_ref; }
+   int               ProxySetup(const int i) const { return m_px[i].setup; }
+   int               ProxyE2Status(const int i) const { return m_px[i].e2status; }
+   int               ProxyNLegs(const int i) const { return m_px[i].n_legs; }
+   int               ProxyNPushes(const int i) const { return m_px[i].n_pushes; }
+   bool              ProxyFillNy(const int i) const { return m_px[i].fill_ny; }
+
+   //--- Index of the proxy of event e, target r, mode and (E1) departure D; -1 if none.
+   int               FindMode(const int e, const int r, const int mode, const double dep) const
+     {
+      for(int i = 0; i < m_n; i++)
+         if(m_px[i].ev == e && m_px[i].r == r && m_px[i].mode == mode && (mode != BTB_MODE_E1 || MathAbs(m_px[i].dep - dep) < 1e-9))
+            return i;
+      return -1;
+     }
+
+   int               CountModeState(const int mode, const int st) const
+     {
+      int c = 0;
+      for(int i = 0; i < m_n; i++)
+         if(m_px[i].mode == mode && m_px[i].state == st)
+            c++;
+      return c;
+     }
+
+   int               CountMode(const int mode) const
+     {
+      int c = 0;
+      for(int i = 0; i < m_n; i++)
+         if(m_px[i].mode == mode)
+            c++;
+      return c;
+     }
    bool              ProxyAtPlacement(const int i) const { return m_px[i].at_placement; }
    long              ProxyPlaceMsc(const int i) const { return m_px[i].place_msc; }
    double            ProxyS0(const int i) const { return m_px[i].s0; }
@@ -389,14 +670,15 @@ public:
          to = m_eng.EventCloseTime(e);
       if(q.Overlaps(from, to))
          return "IN_QUARANTINE";
-      return BTB_ProxyStateName(m_px[i].state, m_px[i].at_placement);
+      return StateText(i);
      }
 
    string            CsvHeader(void) const
      {
       return "event_id,tf,level_type,side,box_n,box_bucket,break_close_time,in_full,in_ny,r_target,placement_time,s0,s0_pips,"
              "limit_price,sl,tp,planned_risk_1r,commission,state,fill_time,fill_delay_s,exit_time,exit_price,exit_reason,"
-             "spread_at_exit,gross_pnl,net_pnl,net_r,commission_r,s0_r,mae_r,mfe_r,ambiguous,close_hour,hour_bucket,spread_bucket";
+             "spread_at_exit,gross_pnl,net_pnl,net_r,commission_r,s0_r,mae_r,mfe_r,ambiguous,close_hour,hour_bucket,spread_bucket,"
+             "mode,dep_d,sample,arm_time,n_legs,n_pushes";
      }
 
    string            CsvRow(const int i, CBTB_QuarantineCheck &q) const
@@ -415,9 +697,13 @@ public:
       bool isL4 = (m_eng.EventLevelType(e) == BTB_L4);
       datetime closeT = m_eng.EventCloseTime(e);
       int hour = (int)((closeT % TRE_SECONDS_PER_DAY) / 3600);
+      bool isE2 = (m_px[i].mode == BTB_MODE_E2);
+      bool inFull = (isE2 ? m_px[i].fill_full : m_eng.EventInFull(e));
+      bool inNy = (isE2 ? m_px[i].fill_ny : m_eng.EventInNy(e));
+      bool e2Known = isE2 && (filled || m_px[i].state == BTB_PX_SETUP_ENDED);
       return m_eng.EventId(e) + "," + m_eng.TimeframeName() + "," + BTB_LevelTypeName(m_eng.EventLevelType(e)) + "," +
              BTB_SideName(m_px[i].dir) + "," + (isL4 ? IntegerToString(boxN) : "NA") + "," + (isL4 ? BTB_BoxBucket(boxN) : "NA") + "," +
-             TRE_IsoTime(closeT) + "," + (m_eng.EventInFull(e) ? "1" : "0") + "," + (m_eng.EventInNy(e) ? "1" : "0") + "," +
+             TRE_IsoTime(closeT) + "," + (inFull ? "1" : "0") + "," + (inNy ? "1" : "0") + "," +
              IntegerToString(m_px[i].r) + "," + T(m_px[i].place_msc) + "," +
              N(placed, m_px[i].s0, d) + "," + N(placed, s0Pips, 4) + "," + N(placed, m_px[i].limit, d) + "," +
              N(valid, m_px[i].sl, d) + "," + N(valid, m_px[i].tp, d) + "," + N(valid, R, 4) + "," + N(valid, m_px[i].commission, 4) + "," +
@@ -429,7 +715,10 @@ public:
              N(valid, R > 0.0 ? m_px[i].commission / R : 0.0, 6) + "," + N(valid, R > 0.0 ? m_px[i].s0 * m_px[i].pp / R : 0.0, 6) + "," +
              N(filled, R > 0.0 ? m_px[i].mae * m_px[i].pp / R : 0.0, 6) + "," + N(filled, R > 0.0 ? m_px[i].mfe * m_px[i].pp / R : 0.0, 6) + "," +
              (closed ? (m_px[i].ambiguous ? "1" : "0") : "NA") + "," + IntegerToString(hour) + "," + BTB_HourBucket(hour) + "," +
-             (placed ? BTB_SpreadBucket(s0Pips) : "NA");
+             (placed ? BTB_SpreadBucket(s0Pips) : "NA") + "," +
+             BTB_ModeName(m_px[i].mode) + "," + (m_px[i].mode == BTB_MODE_E1 ? DoubleToString(m_px[i].dep, 1) : "NA") + "," +
+             BTB_SampleName(m_eng.EventBarTime(e)) + "," + T(m_px[i].arm_msc) + "," +
+             (e2Known ? IntegerToString(m_px[i].n_legs) : "NA") + "," + (e2Known ? IntegerToString(m_px[i].n_pushes) : "NA");
      }
 
    //--- btb_proxies_<TF>.csv (UTF-8, LF): one row per event x R.

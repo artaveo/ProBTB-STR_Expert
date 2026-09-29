@@ -7,7 +7,9 @@ Usage:
 contain reference_config.json, session_schedule.csv, the M1 export
 (bars_M1_BID.csv) and, for tester runs, data_quarantine_windows.csv. The
 reference recomputes btb_days.csv and btb_events_<TF>.csv from the M1 bars only
-and compares them byte for byte with the MQL5 files (roadmap 4.3, 7).
+and compares them byte for byte with the MQL5 files (roadmap 4.3, 7). A BTB-v2
+package (reference_config.json with an "e2" block) also gets btb_setups_E2_<TF>.csv
+(roadmap V3.6).
 Exit code 0 = every ledger identical.
 """
 
@@ -23,6 +25,7 @@ import time
 from typing import List, Tuple
 
 from .levels import Bar, Reference, Schedule
+from .setups import E2Config, build_e2
 
 M1_HEADER = "time,open,high,low,close,ticks,spread_pts"
 
@@ -126,6 +129,13 @@ def build(pkg: str, extra_quarantine: str = None) -> Tuple[dict, dict]:
     files = {"btb_days.csv": "\n".join(ref.tracker.rows()) + "\n"}
     for e in ref.engines:
         files[f"btb_events_{e.tf}.csv"] = "\n".join(e.ledger_lines(in_quarantine)) + "\n"
+    if rc.get("e2"):
+        c = rc["e2"]
+        cfg = E2Config(zigzag_atr=float(c["zigzag_atr"]), spike_atr=float(c["spike_atr"]), spike_bars=int(c["spike_bars"]),
+                       line_tol_atr=float(c["line_tol_atr"]), max_days=int(c["max_days"]))
+        for e in ref.engines:
+            e2 = build_e2(e, ref.tracker, cfg)
+            files[f"btb_setups_E2_{e.tf}.csv"] = "\n".join(e2.ledger_lines(in_quarantine)) + "\n"
     rc["_m1_bars"] = len(bars)
     return rc, files
 

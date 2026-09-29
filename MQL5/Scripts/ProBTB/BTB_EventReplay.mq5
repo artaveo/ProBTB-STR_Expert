@@ -3,24 +3,30 @@
 //| Deterministic replay of the BTB event layer (roadmap 3–4) from   |
 //| an exported M1 file (Common\Files\<Folder>\bars_M1_BID.csv with  |
 //| the spread_pts column) and the exported broker session schedule  |
-//| (session_schedule.csv). Writes btb_days.csv and                  |
-//| btb_events_<TF>.csv exactly as BTB_Expert does, so a run package |
-//| or a synthetic fixture can be re-derived and reconciled with the |
-//| Python reference. No market access, no trading, no proxies.      |
+//| (session_schedule.csv). Writes btb_days.csv, btb_events_<TF>.csv |
+//| and btb_setups_E2_<TF>.csv exactly as BTB_Expert does, so a run  |
+//| package or a synthetic fixture can be re-derived and reconciled  |
+//| with the Python reference. No market access, no trading, no      |
+//| proxies.                                                         |
 //+------------------------------------------------------------------+
 #property copyright   "Pro BTB"
-#property version     "1.00"
+#property version     "2.00"
 #property description "BTB event replay from exported M1 bars (no trading)"
 #property script_show_inputs
 
 #include "../../Include/ProBTB/BTB_Engine.mqh"
 
-input string InpFolder                = "BTB\\BTB-RUN";          // Package folder under Common\Files
+input string InpFolder                = "BTB\\BTB-V2";           // Package folder under Common\Files
 input string InpBarsFile              = "bars_M1_BID.csv";       // M1 bar file inside the folder
 input string InpSessionFile           = "session_schedule.csv";  // Broker session schedule inside the folder
 input string InpQuarantineFile        = "data_quarantine_windows.csv"; // Quarantine CSV inside the folder ("" = none)
 input string InpOutputSubfolder       = "replay";                // Ledger output subfolder
 input int    InpDigits                = 2;                       // Symbol digits
+input double InpE2ZigZagATR           = BTB_E2_ZIGZAG_ATR;       // E2_ZigZagATR
+input double InpE2SpikeATR            = BTB_E2_SPIKE_ATR;        // E2_SpikeATR
+input int    InpE2SpikeBars           = BTB_E2_SPIKE_BARS;       // E2_SpikeBars
+input double InpE2LineTolATR          = BTB_E2_LINE_TOL_ATR;     // E2_LineTolATR
+input int    InpE2MaxDays             = BTB_E2_MAX_DAYS;         // E2_MaxDays
 input bool   InpCloseTerminalWhenDone = false;                   // Close terminal after the run (CI use)
 
 #define BTB_REPLAY_TF_COUNT 2
@@ -42,6 +48,7 @@ CTRE_DataQuarantine  g_quar;
 CBTB_DayTracker      g_days;
 CBTB_LevelSource     g_levels;
 CBTB_LevelEngine     g_eng[BTB_REPLAY_TF_COUNT];
+CBTB_E2Setups        g_e2[BTB_REPLAY_TF_COUNT];
 
 datetime ParseIso(const string s)
   {
@@ -110,8 +117,18 @@ void OnStart(void)
      }
    g_days.Init(GetPointer(g_sched));
    g_levels.Init(GetPointer(g_days));
+   BTB_E2Config e2cfg;
+   BTB_E2ConfigDefaults(e2cfg);
+   e2cfg.zigzag_atr = InpE2ZigZagATR;
+   e2cfg.spike_atr = InpE2SpikeATR;
+   e2cfg.spike_bars = InpE2SpikeBars;
+   e2cfg.line_tol_atr = InpE2LineTolATR;
+   e2cfg.max_days = InpE2MaxDays;
    for(int i = 0; i < BTB_REPLAY_TF_COUNT; i++)
+     {
       g_eng[i].Init(g_tfs[i], GetPointer(g_days), GetPointer(g_levels), InpDigits);
+      g_e2[i].Init(TRE_TimeframeName(g_tfs[i]), TRE_TimeframeSeconds(g_tfs[i]), InpDigits, e2cfg, GetPointer(g_days));
+     }
 
    int h = FileOpen(dir + InpBarsFile, FILE_READ | FILE_TXT | FILE_ANSI | FILE_COMMON);
    if(h == INVALID_HANDLE)
@@ -151,12 +168,19 @@ void OnStart(void)
       g_days.OnM1(b, spreadPts);
       g_levels.OnM1(b);
       for(int i = 0; i < BTB_REPLAY_TF_COUNT; i++)
+        {
          g_eng[i].OnM1(b);
+         g_e2[i].Sync(GetPointer(g_eng[i]));
+        }
       n++;
      }
    FileClose(h);
    for(int i = 0; i < BTB_REPLAY_TF_COUNT; i++)
+     {
       g_eng[i].Flush();
+      g_e2[i].Sync(GetPointer(g_eng[i]));
+      g_e2[i].Finish();
+     }
    g_days.Finish();
 
    string out = dir + InpOutputSubfolder + "\\";
@@ -172,6 +196,8 @@ void OnStart(void)
       string tf = TRE_TimeframeName(g_tfs[i]);
       if(!g_eng[i].WriteCsv(out + "btb_events_" + tf + ".csv", q))
          PrintFormat("BTB replay: cannot write btb_events_%s.csv", tf);
+      if(!g_e2[i].WriteCsv(out + "btb_setups_E2_" + tf + ".csv", q))
+         PrintFormat("BTB replay: cannot write btb_setups_E2_%s.csv", tf);
       summary += StringFormat(" %s: bars=%d event_rows=%d EVENT=%d", tf, g_eng[i].BarCount(), g_eng[i].EventCount(),
                               g_eng[i].CountStatus(BTB_EV_EVENT));
      }

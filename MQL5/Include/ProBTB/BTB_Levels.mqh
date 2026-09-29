@@ -253,6 +253,7 @@ struct BTB_EventRec
    bool              in_full;
    bool              in_ny;
    int               status;      // ENUM_BTB_EVENT_STATUS (IN_QUARANTINE only when written)
+   int               bar_index;   // index of the breakout bar in the engine's bar list (not written)
   };
 
 //+------------------------------------------------------------------+
@@ -307,6 +308,7 @@ private:
       m_events[e].atr = atr;
       m_events[e].in_full = inFull;
       m_events[e].in_ny = inNy;
+      m_events[e].bar_index = m_nBars;
       if(!breakout)
          m_events[e].status = BTB_EV_OPEN_BEYOND;
       else
@@ -520,6 +522,14 @@ public:
    bool              EventInFull(const int i) const { return m_events[i].in_full; }
    bool              EventInNy(const int i) const { return m_events[i].in_ny; }
    int               EventStatus(const int i) const { return m_events[i].status; }
+   int               EventBarIndex(const int i) const { return m_events[i].bar_index; }
+   bool              GetBar(const int k, TRE_Bar &b) const
+     {
+      if(k < 0 || k >= m_nBars)
+         return false;
+      b = m_bars[k];
+      return true;
+     }
    int               CountStatus(const int st) const
      {
       int c = 0;

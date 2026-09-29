@@ -147,3 +147,135 @@ class TestStudyMain(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+# ---------------------------------------------------------------------------------------------
+# BTB-v2 (roadmap V4): Holm over 36 / 24 cells, holdout verdict, sample split
+# ---------------------------------------------------------------------------------------------
+V2_COLS = PROXY_COLS + ["mode", "dep_d", "sample", "arm_time", "n_legs", "n_pushes"]
+SETUP_COLS = ["event_id", "tf", "level_type", "side", "sample", "break_bar_time", "limit_price", "zone_low", "zone_high",
+              "pivots", "n_legs", "spike_time", "spike_price", "spike_depth_atr", "p1_time", "p1_price", "p2_time",
+              "p2_price", "n_pushes", "slope", "first_live_bar", "last_live_bar", "end_bar_time", "status", "in_quarantine"]
+
+
+def v2proxy(mode, tf="M5", r=1, sample="DESIGN", day=5, net=1.0, dep="NA", ny="0", state="FILLED", full="1",
+            legs="NA", level="L1", side="LONG"):
+    p = proxy(level, tf, r, day=day, net=net, state=state, side=side, ny=ny)
+    month = "02" if sample == "DESIGN" else "08"
+    p.update({"mode": mode, "dep_d": dep, "sample": sample, "arm_time": "2026-02-01T10:00:00.000" if mode != "E0" else "",
+              "placement_time": "2026-02-01T10:00:00.000", "n_legs": legs, "n_pushes": "NA", "in_full": full,
+              "fill_time": f"2026-{month}-{day:02d}T10:00:00.000", "spread_bucket": "5_8"})
+    return p
+
+
+def v2event(tf="M5", sample="DESIGN", ny="0", level="L1"):
+    e = event(level, tf, ny=ny)
+    e["break_bar_time"] = "2026-02-02T10:00:00" if sample == "DESIGN" else "2026-08-03T10:00:00"
+    return e
+
+
+def v2setup(tf="M5", sample="DESIGN", legs="3", status="LIVE_TO_FILL"):
+    x = {k: "" for k in SETUP_COLS}
+    x.update({"tf": tf, "level_type": "L1", "side": "LONG", "sample": sample, "n_legs": legs, "status": status,
+              "in_quarantine": "0", "spike_time": "t", "p2_time": "t", "first_live_bar": "t"})
+    return x
+
+
+class TestStudyV2(unittest.TestCase):
+    def test_sample_split_and_rows(self):
+        self.assertEqual(study.sample_of_time("2026-06-30T23:55:00"), "DESIGN")
+        self.assertEqual(study.sample_of_time("2026-07-01T00:00:00"), "HOLDOUT")
+        ev = [v2event(), v2event(sample="HOLDOUT"), v2event(ny="1")]
+        px = [v2proxy("E1", dep="1.0"), v2proxy("E1", dep="1.5"), v2proxy("E1", dep="1.0", sample="HOLDOUT", day=6),
+              v2proxy("E0"), v2proxy("E2", full="1", ny="1"), v2proxy("E2", full="0", state="NO_SPIKE")]
+        st = [v2setup(), v2setup(sample="HOLDOUT"), v2setup(legs="4")]
+        e, p, a = study.v2_rows(ev, st, px, "E1", "FULL", 1, "DESIGN")
+        self.assertEqual((len(e), len(p)), (2, 1))
+        e, p, a = study.v2_rows(ev, st, px, "E1", "FULL", 1, "ALL")
+        self.assertEqual((len(e), len(p)), (3, 2))
+        e, p, a = study.v2_rows(ev, st, px, "E2", "NY", 1, "DESIGN")      # E2: events = setups, window by fill
+        self.assertEqual((len(e), len(p), len(a)), (2, 1, 2))
+        e, p, a = study.v2_rows(ev, st, px, "E2", "FULL", 1, "ALL", legs="4+")
+        self.assertEqual(len(e), 1)
+        e, p, a = study.v2_rows(ev, st, px, "E2", "FULL", 1, "ALL")
+        self.assertEqual(study.funnel("E2", e, a, p), {"events": 3, "armed_or_live": 2, "filled": 1})
+
+    def test_holdout_verdict_rules(self):
+        d_pos = {"mean_net_r": 0.2}
+        d_neg = {"mean_net_r": -0.1}
+        h_ok = {"analysed": 30, "independent_days": 10}
+        self.assertEqual(study.holdout_verdict(d_pos, h_ok, True), study.CONFIRMED)
+        self.assertEqual(study.holdout_verdict(d_neg, h_ok, True), study.NOT_CONFIRMED)    # DESIGN mean must be > 0
+        self.assertEqual(study.holdout_verdict(d_pos, h_ok, False), study.NOT_CONFIRMED)
+        self.assertEqual(study.holdout_verdict(d_pos, {"analysed": 29, "independent_days": 40}, True), study.INCONCLUSIVE)
+        self.assertEqual(study.holdout_verdict(d_pos, {"analysed": 90, "independent_days": 9}, True), study.INCONCLUSIVE)
+
+    def build(self, e1_edge=0.8):
+        rng = random.Random(5)
+        events, setups, proxies = {"M5": [], "M15": []}, {"M5": [], "M15": []}, {"M5": [], "M15": []}
+        for tf in ("M5", "M15"):
+            for smp, n in (("DESIGN", 150), ("HOLDOUT", 60)):
+                for i in range(n):
+                    ny = "1" if i % 2 else "0"
+                    events[tf].append(v2event(tf, smp, ny))
+                    setups[tf].append(v2setup(tf, smp))
+                    day = 1 + i % 25
+                    for r in (1, 2, 3):
+                        proxies[tf].append(v2proxy("E0", tf, r, smp, day, rng.choice([-1.0, float(r)]) - 0.3, ny=ny))
+                        proxies[tf].append(v2proxy("E1", tf, r, smp, day, e1_edge, dep="1.0", ny=ny))
+                        proxies[tf].append(v2proxy("E1", tf, r, smp, day, -0.5, dep="1.5", ny=ny))
+                        proxies[tf].append(v2proxy("E2", tf, r, smp, day, rng.choice([-1.0, 1.0]), ny=ny, legs="3"))
+        return events, setups, proxies
+
+    def test_holm_families_and_verdicts(self):
+        events, setups, proxies = self.build()
+        a = study.analyse_v2_rows(events, setups, proxies, 300, 20260929)
+        self.assertEqual(len(a), 36)
+        self.assertEqual(sum(1 for c in a.values() if c["mode"] != "E0"), 24)
+        c = a["E1|M5|FULL|R1"]
+        self.assertEqual((c["design_classification"], c["holdout_verdict"]), (study.POSITIVE, study.CONFIRMED))
+        self.assertEqual(c["samples"]["HOLDOUT"]["funnel"], {"events": 60, "armed_or_live": 60, "filled": 60})
+        self.assertEqual(a["E1|M5|NY|R1"]["holdout_verdict"], study.CONFIRMED)          # 30 fills, 15 days
+        self.assertTrue(all(x["holdout_verdict"] == study.BASELINE for x in a.values() if x["mode"] == "E0"))
+        self.assertIn(a["E2|M5|FULL|R1"]["holdout_verdict"], (study.NOT_CONFIRMED, study.INCONCLUSIVE))
+        # the same HOLDOUT data with a negative DESIGN mean is never confirmed
+        for tf in ("M5", "M15"):
+            for p in proxies[tf]:
+                if p["mode"] == "E1" and p["dep_d"] == "1.0" and p["sample"] == "DESIGN":
+                    p["net_r"] = "-0.2"
+        b = study.analyse_v2_rows(events, setups, proxies, 300, 20260929)
+        self.assertEqual(b["E1|M5|FULL|R1"]["holdout_verdict"], study.NOT_CONFIRMED)
+        self.assertEqual(b["E1|M5|FULL|R1"]["design_classification"], study.NEGATIVE)
+
+    def test_holm_over_24_not_36(self):
+        # 23 E1/E2 cells with p = 0.5 and one with p = 0.05/24: significant in the 24-family,
+        # although 0.05/24 > 0.05/36 would fail a 36-family first step.
+        p = {f"c{i}": 0.5 for i in range(23)}
+        p["x"] = 0.05 / 24
+        self.assertTrue(study.holm_bonferroni(p)["x"])
+        p36 = dict(p, **{f"e0_{i}": 0.5 for i in range(12)})
+        self.assertFalse(study.holm_bonferroni(p36)["x"])
+
+    def test_main_writes_v2_report(self):
+        tmp = tempfile.mkdtemp(prefix="btb_v2_")
+        try:
+            events, setups, proxies = self.build()
+            with open(os.path.join(tmp, "reference_config.json"), "w", encoding="utf-8") as f:
+                json.dump({"timeframes": ["M5", "M15"]}, f)
+            for tf in ("M5", "M15"):
+                for name, cols, rows in ((f"btb_events_{tf}.csv", EVENT_COLS, events[tf]),
+                                         (f"btb_proxies_{tf}.csv", V2_COLS, proxies[tf]),
+                                         (f"btb_setups_E2_{tf}.csv", SETUP_COLS, setups[tf])):
+                    with open(os.path.join(tmp, name), "w", encoding="utf-8") as f:
+                        f.write(",".join(cols) + "\n" + "".join(",".join(r[c] for c in cols) + "\n" for r in rows))
+            self.assertEqual(study.main([tmp, "--reps", "200"]), 0)
+            with open(os.path.join(tmp, "python_reference", "report.json"), encoding="utf-8") as f:
+                rep = json.load(f)
+            self.assertEqual(len(rep["primary"]), 36)
+            self.assertEqual(rep["e2_funnel"]["M5|HOLDOUT"]["setups"], 60)
+            self.assertIn("E1|D1.5|M5|FULL|R1", rep["diagnostics"]["e1_dep"])
+            with open(os.path.join(tmp, "python_reference", "report.md"), encoding="utf-8") as f:
+                md = f.read()
+            self.assertEqual(sum(1 for line in md.splitlines() if line[:5] in ("| E0 ", "| E1 ", "| E2 ")), 36)
+        finally:
+            shutil.rmtree(tmp, ignore_errors=True)

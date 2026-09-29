@@ -1,4 +1,9 @@
-"""BTB-3 report: 4 levels x 2 timeframes x 2 windows x 3 R = 48 cells (roadmap 6, 7).
+"""BTB-3 report (48 cells, roadmap 6, 7) and the BTB-4 / PART 2 report (roadmap V4).
+
+A package whose btb_proxies_<TF>.csv has the "mode" column (BTB-v2) gets the V4 report: 36 primary
+cells (E0, E1 with D = 1.0, E2; pooled over L1-L4; TF x window x R) per sample DESIGN / HOLDOUT / ALL,
+the DESIGN classification (Holm over 36), the HOLDOUT verdict (Holm over the 24 E1 + E2 cells and
+DESIGN mean > 0), the arming / setup funnel and the diagnostic cells. Otherwise the Part 1 report:
 
 Usage:
     python -m btb_reference.study <package_dir> [--reps 10000] [--seed 20260929]
@@ -241,15 +246,277 @@ def markdown(rep: dict) -> str:
     return "\n".join(lines)
 
 
+# ======================================================================================
+# BTB-v2 (roadmap PART 2, V4): modes E0 / E1 / E2, samples DESIGN / HOLDOUT / ALL
+# ======================================================================================
+CONTRACT_ID_V2 = "BTB-V2-STUDY-2026-09-30"
+MODES = ("E0", "E1", "E2")
+SAMPLES = ("DESIGN", "HOLDOUT", "ALL")
+PRIMARY_DEP = "1.0"
+SECONDARY_DEPS = ("1.5", "2.0")
+HOLDOUT_MIN_FILLS = 30
+HOLDOUT_MIN_DAYS = 10
+HOLDOUT_START_ISO = "2026-07-01"
+CONFIRMED = "CONFIRMED"
+NOT_CONFIRMED = "NOT_CONFIRMED"
+BASELINE = "BASELINE"
+SPREAD_BUCKETS = ("LT3", "3_5", "5_8", "GE8")
+
+
+def is_v2(proxies_by_tf: Dict[str, List[dict]]) -> bool:
+    return any(rows and "mode" in rows[0] for rows in proxies_by_tf.values())
+
+
+def sample_of_time(iso: str) -> str:
+    return "DESIGN" if iso[:10] < HOLDOUT_START_ISO else "HOLDOUT"
+
+
+def in_sample(row_sample: str, sample: str) -> bool:
+    return sample == "ALL" or row_sample == sample
+
+
+def primary_key(mode: str, tf: str, window: str, r: int) -> str:
+    return f"{mode}|{tf}|{window}|R{r}"
+
+
+def v2_rows(events: List[dict], setups: List[dict], proxies: List[dict], mode: str, window: str, r: int, sample: str,
+            dep: str = PRIMARY_DEP, level: str = None, legs: str = None, side: str = None, bucket: str = None):
+    """(events, window-filtered proxies, all-window proxies of the cell) for one v2 cell.
+
+    E0/E1: events = EVENT rows with the window flag (window of the breakout close, as Part 1).
+    E2: events = the E2 setups (one per EVENT); the window of a proxy is decided by its fill time.
+    """
+    flag = window_flag(window)
+
+    def keep_px(p):
+        if p["mode"] != mode or int(p["r_target"]) != r or not in_sample(p["sample"], sample):
+            return False
+        if mode == "E1" and p["dep_d"] != dep:
+            return False
+        if level and p["level_type"] != level:
+            return False
+        if side and p["side"] != side:
+            return False
+        if bucket and p["spread_bucket"] != bucket:
+            return False
+        if legs and not (p["n_legs"] == "3" if legs == "3" else (p["n_legs"] not in ("NA", "") and int(p["n_legs"]) >= 4)):
+            return False
+        return True
+
+    px_all = [p for p in proxies if keep_px(p)]
+    px = [p for p in px_all if p[flag] == "1"]
+    if mode == "E2":
+        ev = [x for x in setups if in_sample(x["sample"], sample) and x["in_quarantine"] == "0"
+              and (not level or x["level_type"] == level) and (not side or x["side"] == side)
+              and (not legs or (x["n_legs"] == "3" if legs == "3" else int(x["n_legs"]) >= 4))]
+    else:
+        ev = [e for e in events if e["status"] == "EVENT" and e[flag] == "1"
+              and in_sample(sample_of_time(e["break_bar_time"]), sample)
+              and (not level or e["level_type"] == level) and (not side or e["side"] == side)]
+    return ev, px, px_all
+
+
+def funnel(mode: str, ev: List[dict], px_all: List[dict], px: List[dict]) -> dict:
+    armed_col = "placement_time" if mode == "E0" else "arm_time"
+    return {"events": len(ev), "armed_or_live": sum(1 for p in px_all if p[armed_col] not in ("", "NA")),
+            "filled": sum(1 for p in px if p["state"] in FILLED_STATES)}
+
+
+def v2_cell(events, setups, proxies, mode, window, r, sample, reps, seed, **kw) -> dict:
+    ev, px, px_all = v2_rows(events, setups, proxies, mode, window, r, sample, **kw)
+    s = cell_stats(ev, px, reps, seed)
+    s["funnel"] = funnel(mode, ev, px_all, px)
+    return s
+
+
+def holdout_verdict(design: dict, holdout: dict, holm_sig: bool) -> str:
+    if holdout["analysed"] < HOLDOUT_MIN_FILLS or holdout["independent_days"] < HOLDOUT_MIN_DAYS:
+        return INCONCLUSIVE
+    if holm_sig and design["mean_net_r"] is not None and design["mean_net_r"] > 0:
+        return CONFIRMED
+    return NOT_CONFIRMED
+
+
+def analyse_v2_rows(events_by_tf, setups_by_tf, proxies_by_tf, reps: int = DEFAULT_REPS, seed: int = DEFAULT_SEED) -> dict:
+    primary = {}
+    for mode in MODES:
+        for tf in proxies_by_tf:
+            for window in WINDOWS:
+                for r in R_TARGETS:
+                    key = primary_key(mode, tf, window, r)
+                    primary[key] = {"mode": mode, "tf": tf, "window": window, "r": r, "samples": {
+                        smp: v2_cell(events_by_tf[tf], setups_by_tf.get(tf, []), proxies_by_tf[tf], mode, window, r, smp,
+                                     reps, seed) for smp in SAMPLES}}
+    # DESIGN: Part 1 classification with Holm over the 36 primary cells
+    hd = holm_bonferroni({k: c["samples"]["DESIGN"]["p_value"] for k, c in primary.items()}, ALPHA)
+    # HOLDOUT (decisive): Holm over the 24 E1 + E2 primary cells
+    hh = holm_bonferroni({k: c["samples"]["HOLDOUT"]["p_value"] for k, c in primary.items() if c["mode"] != "E0"}, ALPHA)
+    for k, c in primary.items():
+        d, h = c["samples"]["DESIGN"], c["samples"]["HOLDOUT"]
+        c["design_holm_significant"] = hd[k]
+        c["design_classification"] = classify(d, hd[k])
+        if c["mode"] == "E0":
+            c["holdout_holm_significant"] = None
+            c["holdout_verdict"] = BASELINE
+        else:
+            c["holdout_holm_significant"] = hh[k]
+            c["holdout_verdict"] = holdout_verdict(d, h, hh[k])
+    return primary
+
+
+def diagnostics_v2(events_by_tf, setups_by_tf, proxies_by_tf) -> dict:
+    """Descriptive cells (no bootstrap, not decision-making)."""
+    out = {"per_level": {}, "e1_dep": {}, "e2_legs": {}, "side": {}, "spread_bucket": {}}
+
+    def put(group, key, **kw):
+        out[group][key] = {smp: v2_cell(events_by_tf[kw["tf"]], setups_by_tf.get(kw["tf"], []), proxies_by_tf[kw["tf"]],
+                                        kw["mode"], kw["window"], kw["r"], smp, 0, 0,
+                                        **{a: b for a, b in kw.items() if a in ("dep", "level", "legs", "side", "bucket")})
+                           for smp in SAMPLES}
+
+    for tf in proxies_by_tf:
+        for window in WINDOWS:
+            for r in R_TARGETS:
+                for mode in MODES:
+                    for level in LEVELS:
+                        put("per_level", f"{mode}|{tf}|{window}|R{r}|{level}", mode=mode, tf=tf, window=window, r=r, level=level)
+                    for side in ("LONG", "SHORT"):
+                        put("side", f"{mode}|{tf}|{window}|R{r}|{side}", mode=mode, tf=tf, window=window, r=r, side=side)
+                for dep in SECONDARY_DEPS:
+                    put("e1_dep", f"E1|D{dep}|{tf}|{window}|R{r}", mode="E1", tf=tf, window=window, r=r, dep=dep)
+                for legs in ("3", "4+"):
+                    put("e2_legs", f"E2|legs{legs}|{tf}|{window}|R{r}", mode="E2", tf=tf, window=window, r=r, legs=legs)
+            for r in R_TARGETS:
+                for mode in MODES:
+                    for bucket in SPREAD_BUCKETS:
+                        put("spread_bucket", f"{mode}|{tf}|FULL|R{r}|{bucket}", mode=mode, tf=tf, window="FULL", r=r,
+                            bucket=bucket)
+    return out
+
+
+def e2_funnel(setups_by_tf, proxies_by_tf) -> dict:
+    out = {}
+    for tf, rows in setups_by_tf.items():
+        for smp in SAMPLES:
+            st = [x for x in rows if in_sample(x["sample"], smp)]
+            px = [p for p in proxies_by_tf[tf] if p["mode"] == "E2" and p["r_target"] == "1" and in_sample(p["sample"], smp)]
+            out[f"{tf}|{smp}"] = {
+                "setups": len(st),
+                "status": dict(sorted(Counter(x["status"] for x in st).items())),
+                "three_legs": sum(1 for x in st if int(x["n_legs"]) >= 3),
+                "spike": sum(1 for x in st if x["spike_time"]),
+                "trend_line": sum(1 for x in st if x["p2_time"]),
+                "live": sum(1 for x in st if x["first_live_bar"]),
+                "live_to_fill": sum(1 for x in st if x["status"] == "LIVE_TO_FILL"),
+                "filled_r1": sum(1 for p in px if p["state"] in FILLED_STATES),
+            }
+    return out
+
+
+def analyse_v2(pkg: str, reps: int = DEFAULT_REPS, seed: int = DEFAULT_SEED) -> dict:
+    with open(os.path.join(pkg, "reference_config.json"), "r", encoding="utf-8") as f:
+        rc = json.load(f)
+    events_by_tf, setups_by_tf, proxies_by_tf = {}, {}, {}
+    for tf in rc["timeframes"]:
+        events_by_tf[tf] = read_rows(os.path.join(pkg, f"btb_events_{tf}.csv"))
+        proxies_by_tf[tf] = read_rows(os.path.join(pkg, f"btb_proxies_{tf}.csv"))
+        sp = os.path.join(pkg, f"btb_setups_E2_{tf}.csv")
+        setups_by_tf[tf] = read_rows(sp) if os.path.exists(sp) else []
+    days_path = os.path.join(pkg, "btb_days.csv")
+    days = read_rows(days_path) if os.path.exists(days_path) else []
+    report = {"contract_id": CONTRACT_ID_V2, "package": os.path.abspath(pkg),
+              "rules": {"primary_cells": "E0, E1 (D = 1.0), E2 pooled over L1-L4, per TF x window x R (36)",
+                        "design": "Part 1 classification (min 100 fills, 20 days), Holm over the 36 primary cells",
+                        "holdout": "CONFIRMED = HOLDOUT p passes Holm over the 24 E1 + E2 primary cells at alpha 0.05 "
+                                   "and DESIGN mean net R > 0; INCONCLUSIVE_LOW_N below 30 fills or 10 days; "
+                                   "E0 is the BASELINE and never confirmed",
+                        "samples": f"by the event's break-candle date; HOLDOUT from {HOLDOUT_START_ISO}",
+                        "bootstrap": {"method": "day-block (broker day of the fill)", "reps": reps, "seed": seed},
+                        "e2_window": "decided by the fill time; E0/E1 by the breakout close"},
+              "primary": analyse_v2_rows(events_by_tf, setups_by_tf, proxies_by_tf, reps, seed),
+              "diagnostics": diagnostics_v2(events_by_tf, setups_by_tf, proxies_by_tf),
+              "e2_funnel": e2_funnel(setups_by_tf, proxies_by_tf),
+              "summary": summary(events_by_tf, {tf: [p for p in rows if p["mode"] == "E0"] for tf, rows in proxies_by_tf.items()},
+                                 days)}
+    man = os.path.join(pkg, "manifest.json")
+    if os.path.exists(man):
+        with open(man, "r", encoding="utf-8") as f:
+            m = json.load(f)
+        report["experiment_id"] = m.get("experiment_id")
+        report["data_gate"] = m.get("tick_source", {}).get("data_gate")
+        report["non_default_inputs"] = m.get("inputs", {}).get("non_default_inputs")
+    report["design_classification_counts"] = dict(sorted(Counter(
+        c["design_classification"] for c in report["primary"].values()).items()))
+    report["holdout_verdict_counts"] = dict(sorted(Counter(
+        c["holdout_verdict"] for c in report["primary"].values()).items()))
+    return report
+
+
+def markdown_v2(rep: dict) -> str:
+    lines = ["# Pro BTB — BTB-4 Report (PART 2: E0 / E1 / E2)", "",
+             f"Experiment `{rep.get('experiment_id')}` · data gate **{rep.get('data_gate')}** · "
+             f"non-default inputs: {rep.get('non_default_inputs')}", "",
+             "Primary cells are pooled over L1–L4. DESIGN = 2026-01-01..06-30 (E1 was suggested by it, so its DESIGN "
+             "numbers are optimistic); HOLDOUT = 2026-07-01..09-25 decides. No cell is selected as best.", "",
+             f"DESIGN classifications: {rep['design_classification_counts']} · HOLDOUT verdicts: {rep['holdout_verdict_counts']}",
+             "", "## Primary cells", "",
+             "| Mode | TF | Window | R | DESIGN events → armed/live → fills | DESIGN mean net R | DESIGN win | DESIGN p | "
+             "DESIGN class | HOLDOUT events → armed/live → fills | HOLDOUT days | HOLDOUT mean net R | HOLDOUT win | "
+             "HOLDOUT p | Holm (24) | HOLDOUT verdict | ALL fills / mean |",
+             "|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|"]
+    for c in rep["primary"].values():
+        d, h, a = c["samples"]["DESIGN"], c["samples"]["HOLDOUT"], c["samples"]["ALL"]
+        fd, fh = d["funnel"], h["funnel"]
+        hs = c["holdout_holm_significant"]
+        lines.append(
+            f"| {c['mode']} | {c['tf']} | {c['window']} | {c['r']} | {fd['events']} → {fd['armed_or_live']} → {d['analysed']} | "
+            f"{fmt(d['mean_net_r'])} | {fmt(d['win_rate'])} | {fmt(d['p_value'], 4)} | {c['design_classification']} | "
+            f"{fh['events']} → {fh['armed_or_live']} → {h['analysed']} | {h['independent_days']} | {fmt(h['mean_net_r'])} | "
+            f"{fmt(h['win_rate'])} | {fmt(h['p_value'], 4)} | {'—' if hs is None else ('yes' if hs else 'no')} | "
+            f"{c['holdout_verdict']} | {a['analysed']} / {fmt(a['mean_net_r'])} |")
+    lines += ["", "## E2 funnel (setups → three legs → spike → trend line → live → LIVE_TO_FILL → filled, R = 1)", "",
+              "| TF | Sample | Setups | ≥3 legs | Spike | Line | Live | Live to fill | Filled | Statuses |",
+              "|---|---|---|---|---|---|---|---|---|---|"]
+    for key, f in rep["e2_funnel"].items():
+        tf, smp = key.split("|")
+        lines.append(f"| {tf} | {smp} | {f['setups']} | {f['three_legs']} | {f['spike']} | {f['trend_line']} | {f['live']} | "
+                     f"{f['live_to_fill']} | {f['filled_r1']} | {f['status']} |")
+    lines += ["", "## Diagnostics (descriptive, not decision-making): fills / mean net R", ""]
+    for group, title in (("e1_dep", "E1 secondary departures"), ("e2_legs", "E2 legs 3 vs ≥ 4"),
+                         ("per_level", "Per level"), ("side", "Long vs short"), ("spread_bucket", "Spread buckets (FULL)")):
+        lines += [f"### {title}", "", "| Cell | DESIGN | HOLDOUT | ALL |", "|---|---|---|---|"]
+        for key, smp in rep["diagnostics"][group].items():
+            if all(smp[x]["analysed"] == 0 for x in SAMPLES):
+                continue
+            lines.append(f"| {key} | " + " | ".join(f"{smp[x]['analysed']} / {fmt(smp[x]['mean_net_r'])}" for x in SAMPLES) + " |")
+        lines.append("")
+    return "\n".join(lines)
+
+
 def main(argv=None) -> int:
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("package_dir")
     ap.add_argument("--reps", type=int, default=DEFAULT_REPS)
     ap.add_argument("--seed", type=int, default=DEFAULT_SEED)
     args = ap.parse_args(argv)
-    rep = analyse(args.package_dir, args.reps, args.seed)
     out = os.path.join(args.package_dir, "python_reference")
     os.makedirs(out, exist_ok=True)
+    first_tf = json.load(open(os.path.join(args.package_dir, "reference_config.json"), encoding="utf-8"))["timeframes"][0]
+    if is_v2({first_tf: read_rows(os.path.join(args.package_dir, f"btb_proxies_{first_tf}.csv"))[:1]}):
+        rep = analyse_v2(args.package_dir, args.reps, args.seed)
+        with open(os.path.join(out, "report.json"), "w", encoding="utf-8") as f:
+            json.dump(rep, f, indent=2)
+        with open(os.path.join(out, "report.md"), "w", encoding="utf-8") as f:
+            f.write(markdown_v2(rep))
+        for c in rep["primary"].values():
+            d, h = c["samples"]["DESIGN"], c["samples"]["HOLDOUT"]
+            print(f"{c['mode']} {c['tf']} {c['window']} R{c['r']}: DESIGN fills={d['analysed']} mean={fmt(d['mean_net_r'])} "
+                  f"{c['design_classification']} | HOLDOUT fills={h['analysed']} mean={fmt(h['mean_net_r'])} "
+                  f"p={fmt(h['p_value'], 4)} -> {c['holdout_verdict']}")
+        print(f"DESIGN {rep['design_classification_counts']} HOLDOUT {rep['holdout_verdict_counts']} -> "
+              f"{os.path.join(out, 'report.md')}")
+        return 0
+    rep = analyse(args.package_dir, args.reps, args.seed)
     with open(os.path.join(out, "report.json"), "w", encoding="utf-8") as f:
         json.dump(rep, f, indent=2)
     with open(os.path.join(out, "report.md"), "w", encoding="utf-8") as f:

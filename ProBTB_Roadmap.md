@@ -2,7 +2,7 @@
 
 Owner repository: `https://github.com/artaveo/ProBTB-STR_Expert` · owner folder `E:\Trade\ProBTB-STR_Expert` · commits go straight to `main` (no branches, no PRs).
 
-Status: **BTB-1, BTB-2 and BTB-3 are COMPLETE** (Step A code 2026-09-29, Step B build and run 2026-09-29; completion records in Section 9, report in `research/btb_run/BTB-RUN/python_reference/report.md`). **Next: PART 2 (BTB-v2, phase BTB-4) is authorized** — see "PART 2" near the end of this file. The same Step A / Step B split applies.
+Status: **BTB-1, BTB-2 and BTB-3 are COMPLETE** (Step A code 2026-09-29, Step B build and run 2026-09-29; completion records in Section 9, report in `research/btb_run/BTB-RUN/python_reference/report.md`). **PART 2 (BTB-v2), phase BTB-4: Step A CODE COMPLETE (not compiled), 2026-09-30** — record in Section 9, closures 35–60 in Section 11, procedure in `docs/BTB_RunCard.md` Section 10. **Next: BTB-4 Step B** (owner: `git pull`, then Cowork).
 
 | Step | Who | What |
 |---|---|---|
@@ -396,6 +396,49 @@ Result: INCONCLUSIVE_LOW_N 30, NEGATIVE 8, OPEN 10, POSITIVE_EVIDENCE 0.
   is INCONCLUSIVE_LOW_N). The owner decides whether to continue.
 ```
 
+```
+BTB-4 — CODE COMPLETE (not compiled)
+Date: 2026-09-30
+Step: A (Claude Code cloud session; no MetaTrader)
+Files changed:
+  new:  MQL5/Include/ProBTB/BTB_Swings.mqh, BTB_Setups.mqh
+        MQL5/Profiles/Tester/BTB_RUN_V2.set, MQL5/Presets/TRE_RawTickAudit_BTB_V2.set
+        python/btb_reference/{swings,setups,entries,regression}.py
+        python/tests/btb_v2_fixtures.py, test_btb_setups.py, tools/gen_e2_fixtures.py
+  edit: MQL5/Include/ProBTB/BTB_Types.mqh, BTB_Levels.mqh, BTB_Proxy.mqh, BTB_Engine.mqh
+        MQL5/Experts/ProBTB/BTB_Expert.mq5 (2.00), MQL5/Scripts/ProBTB/BTB_EventReplay.mq5 (2.00), BTB_Tests.mq5
+        config/btb_tester.ini, config/btb_raw_audit.ini
+        python/btb_reference/run_reference.py, study.py, python/tests/test_btb_study.py
+        docs/BTB_RunCard.md (Section 10), ProBTB_Roadmap.md
+  TRE engine files: unchanged (tools/tre_port.py verify -> PASS; empty git diff).
+Summary:
+  V1: sample column DESIGN/HOLDOUT (break date < / >= 2026-07-01) on proxies and setups; one pass
+    2026-01-01..2026-09-25 (tester ToDate 2026.09.26), ExperimentId BTB-V2.
+  V2: E1 for D = 1.0 / 1.5 / 2.0 in the same proxy book: reference stop, arming at P +/- Dep, arming tick =
+    placement tick, INVALIDATED_BEFORE_ARM / _BEFORE_FILL, 21:30 cancel, no 12-bar expiry, no MISSED_TP_FIRST.
+  V3: ZigZag(1.0 x ATR14) and 2/2 fractals; E2 setups (leg 1 containing the breakout, legs 2..n with higher
+    highs / higher lows above the zone, >= 3 legs, spike 2.0 x ATR in 3 bars, pushes p1/p2 with rolls, trend
+    line, live bars at |y - P| <= 0.5 x ATR inside FULL, 3-day life, all terminal statuses); E2 proxies with
+    s0 from the first live tick and the window from the fill; btb_setups_E2_<TF>.csv (MQL5 + Python).
+  V4: study.py v2: 36 primary cells (E0, E1 D=1.0, E2 x TF x window x R) per sample DESIGN / HOLDOUT / ALL,
+    funnel events -> armed/live -> filled, Holm 36 on DESIGN, Holm 24 (E1+E2) on HOLDOUT, CONFIRMED /
+    NOT_CONFIRMED / BASELINE, HOLDOUT minimum 30 fills / 10 days; diagnostics (per level, D 1.5/2.0,
+    n_legs 3 vs >= 4, long/short, spread buckets). Part 1 packages still produce the Part 1 report.
+  V5: E0 regression tool (python -m btb_reference.regression); E0 columns 1-36 and E0 behaviour unchanged.
+Compile/Tests:
+  MQL5: NOT compiled, NOT run (Step B). New suites in BTB_Tests.mq5: TestBtbSwings, TestBtbTrendLine,
+    TestBtbE2Setups (owner chart long + short mirror, exact ledger row, every terminal status, warm-up and
+    window gating), TestBtbE1 (arming boundary, invalidation, no 12-bar expiry, 21:30, short mirror),
+    TestBtbE2Proxy; the tick path == M1 path test also compares the setup ledgers.
+  Python: python -m unittest discover -s tests -> Ran 67 tests, OK. The owner-chart test (V6) passes:
+    LIVE_TO_FILL, n_legs = 3, n_pushes = 2, live from bar 40, P reached on bar 41, long and short.
+  E0 fixtures of Part 1 pass unchanged. On the committed Part 1 DESIGN bars the Python E2 reference builds
+    771 (M5) / 662 (M15) setups; no M5 setup reaches LIVE_TO_FILL (most end STRUCTURE_FAILED on the first
+    pullback into the zone) — consistent with "E2 is rare" (V4), not a verdict.
+Result: CODE COMPLETE. Step B: follow docs/BTB_RunCard.md Section 10; check the Section 11 "Step B: check
+  first (BTB-4)" items first.
+```
+
 ## 10. Operator notes (owner's machine, verified 2026-09-29)
 
 | Item | Value |
@@ -470,6 +513,55 @@ Step B, 2026-09-29.
 32. Entry-fill asymmetry (observation, no change — Section 5.1 is pre-registered): P is the Bid close, a Buy Limit fills on Ask ≤ P and a Sell Limit on Bid ≥ P. A long therefore needs the Bid to fall by at least one spread below the close, while a short fills at placement whenever the Bid has not fallen since the close. In the run all 1,017 `FILLED_AT_PLACEMENT` rows are SHORT and no LONG row is; `MISSED_TP_FIRST` is almost only LONG. Long and short results are reported separately (report.md) and must be read with this in mind.
 33. The manifest's `RoadmapSHA256` (`0b945239…1843`) is the roadmap as it was at the run (commit `2d3effb`), before the Step B records were appended.
 34. Owner request after the report: `report.md` also shows per cell the exit counts (TP, SL, 21:30 close, gap) and two descriptive risk columns: **Max DD R** = largest peak-to-trough fall of the cumulative net R of the cell's analysed proxies in exit order (exit time, then fill time; equity starts at 0), and **Max L streak** = most consecutive trades with net R < 0. Proxies overlap in time and are 1-lot diagnostics, so these are per-cell sequences, not a portfolio drawdown. They do not enter the Section 6 classification (unchanged). Report regenerated from the committed ledgers; no tester re-run. Python tests: 37 OK.
+
+**BTB-4 (PART 2), Step A, 2026-09-30.** Conservative choices where V1–V6 are silent.
+
+*Sample and ledgers*
+
+35. `sample` is written only where V3.6 adds columns: `btb_proxies_<TF>.csv` and `btb_setups_E2_<TF>.csv`. `btb_days.csv` and `btb_events_<TF>.csv` keep their Part 1 format (the sample follows from the date), so the Part 1 fixtures and the E0 regression apply unchanged.
+36. The proxy ledger keeps the 36 Part 1 columns in place and appends `mode, dep_d, sample, arm_time, n_legs, n_pushes` (42 columns; the header test changed from 36 to 42). E0 rows are the Part 1 rows plus these six columns (`E0, NA, <sample>, , NA, NA`). Row order: per event E0 R1–R3, then E1 D1.0 R1–R3, D1.5, D2.0; E2 rows follow when the setup is created (at the breakout bar).
+37. E0 regression = DESIGN days, DESIGN events and E0 DESIGN proxy rows cut to 36 columns, compared line by line with the Part 1 package (`python -m btb_reference.regression`).
+
+*E1 (V2)*
+
+38. `Dep = D × |P − SL_ref|`, where `SL_ref` is the Part 1 stop computed from the spread of the reference tick (the first tick at/after the breakout close, i.e. the Part 1 placement tick). The arming price is aligned to the tick size **away** from P, so the departure is never shorter than Dep. Arming is on the Bid for both sides (V2.2): long `Bid ≥ P + Dep`, short `Bid ≤ P − Dep`.
+39. Before arming, a stop trigger on `SL_ref` ends the row as `INVALIDATED_BEFORE_ARM`. At the arming tick SL is recomputed with that tick's spread (5.2), the TP solved (5.3) and the order placed; a placement-tick fill is allowed as in Part 1.
+40. Per tick, a pending E1 order is checked in the order 21:30 → fill → stop trigger (`INVALIDATED_BEFORE_FILL`). Before arming: 21:30 → stop → arm. New end states: `NOT_ARMED_WINDOW_END` (21:30 reached unarmed) and `NOT_ARMED_END_OF_DATA`; both are outside the analysis set, like the other non-fill states.
+41. The E1 window is decided by the breakout close (V2.5), as in Part 1; the E1 funnel is events → armed → filled.
+
+*Structure (V3.1)*
+
+42. ZigZag: a bar that makes a new swing extreme continues the swing even if its other end also reaches the reversal distance (a single wide bar does not reverse itself). Z uses ATR14 **after** the detecting bar k. No reversal is detected until ATR14 is ready; the first-pivot rule compares bar 0's low (tested first) and high. After a pivot the opposite extreme is recomputed over the bars after the pivot bar up to k.
+43. Fractals are strict 2/2 (strictly beyond both neighbours on each side, as LSR), confirmed at the close of bar c + 2.
+
+*E2 setups (V3.2–V3.5)*
+
+44. Leg 1 = two consecutive ZigZag pivots L0 → H1 (long) with `bar(L0) ≤ breakout bar ≤ bar(H1)`. All pivots of the data are scanned in order, including those confirmed before the event, and the setup waits while the swing is unconfirmed. If the first pivot whose bar is after the breakout bar does not complete such a pair (for example a pivot low), the setup ends as `NO_LEG1`.
+45. Before 3 legs, every pull pivot must be strictly above the zone top (`break_high`) and strictly above the previous pull pivot; every leg pivot strictly above the previous one. Otherwise `STRUCTURE_FAILED`.
+46. Spike: bars `bar(Hn)+1 … bar(Hn)+3`, threshold `2.0 × ATR14` after the Hn bar; the first bar that reaches it is the spike bar (its low/high and depth in ATR are recorded). With n ≥ 3 and no spike, a new higher leg with a valid pull pivot restarts the legs (n + 1, new spike window); a lower leg pivot or an invalid pull pivot ends the setup as `NO_SPIKE`.
+47. Pushes: pull fractals after the Hn bar. Push 1 = the first; a lower one without a confirmed opposite fractal strictly between them extends push 1, a higher one restarts it. Push 2 = a lower one with such a fractal between. In the LINE phase a lower fractal with an opposite fractal between rolls the pushes (`n_pushes + 1`); without one it deepens p2. Any pull fractal at or inside the zone before the line exists ends the setup as `STRUCTURE_FAILED`; in the LINE phase such fractals are ignored.
+48. Slope is taken from the current p1/p2. With the geometry of 47 it is always < 0 for a long (V3.4.3).
+49. Live bar k (from the bar after p2's confirmation): `|y(k) − P| ≤ 0.5 × ATR14(k−1)` (both boundaries included), and the whole bar inside the FULL window (`open` in FULL of its broker day and `open + period ≤ 21:30`). `y(k) < P − tol` (long) ends the setup as `LINE_PASSED`, checked before the live test.
+50. Bar-level end of a setup (at the bar's close, for the ledger): a live bar whose low reaches P → `LIVE_TO_FILL`; a bar whose low reaches the far edge of the zone (`break_low`) → `INVALIDATED_BEFORE_FILL`. The tick-level proxy fills or stops on its own rules; a `LIVE_TO_FILL` bar where the Ask never reached P ends the proxy as `NOT_FILLED_AT_TOUCH`. After placement, a tick-level stop trigger ends the proxy as `INVALIDATED_BEFORE_FILL`.
+51. 3-day life: the broker dates of the bars seen, counted from the breakout date (= day 1); the first bar on a 4th date ends the setup (`EXPIRED_3_DAYS`) before anything else on that bar.
+52. `END_OF_DATA` is an extra setup status for setups still open at the end of the data (outside the analysis). The setup ledger has an `in_quarantine` column (breakout candle overlaps a quarantine window); the setup status itself is not changed.
+53. Per signal bar, each setup advances in this order: expiry → LINE step → ZigZag pivots → spike → fractals. A new setup is created after its breakout bar and runs pivots → spike → fractals immediately.
+54. E2 proxies: s0 and SL come from the first live tick (the placement tick); orders exist only on live bars; the window of a filled E2 proxy is decided by the fill time (FULL always, NY when `fill ≥ 16:30`), so unfilled E2 rows have `in_full = in_ny = 0`. `n_legs` / `n_pushes` in the proxy row are the setup values at the fill or the end.
+
+*Study (V4)*
+
+55. The E2 "events" of a cell are the E2 setups (events that entered E2), and the E2 funnel is setups → live → filled; E0/E1 events are Part 1 `EVENT` rows. `n_legs = 3` vs `≥ 4` is a diagnostic split.
+56. Holm: DESIGN over the 36 primary cells; HOLDOUT over the 24 E1 + E2 primary cells. Verdicts: E1/E2 `CONFIRMED` / `NOT_CONFIRMED` / `INCONCLUSIVE_LOW_N` (HOLDOUT < 30 fills or < 10 days), E0 `BASELINE`. The Part 1 bootstrap settings (10,000 resamples, seed 20260929) are kept; diagnostic cells report descriptive values only (no bootstrap, no p-value).
+57. `study.py` detects a v2 package by the `mode` column; a Part 1 package (no `mode` column) goes through the unchanged Part 1 code path.
+
+*Tests*
+
+58. The E2 fixture bars live in `python/tests/btb_v2_fixtures.py` and are copied into `BTB_Tests.mq5` by `tools/gen_e2_fixtures.py --write` (generated block, checked by a Python test for staleness).
+
+**Step B: check first (BTB-4)** (constructs new to this repository)
+
+59. (a) Two-dimensional array parameters `const double &x[][4]` / `[][2]` and global 2-D initialisers in the generated fixture block of `BTB_Tests.mq5`; (b) the class pointer `CBTB_E2Setups *` held in `CBTB_ProxyBook` and `CBtbFlow`, compared with `NULL` and dereferenced with `.`; (c) `ConfigureV2(const double &deps[], CBTB_E2Setups *e2)` called with `GetPointer(g_e2[i])` of a global object array and with `NULL`; (d) `BTB_ParseDepList` (`StringSplit` into a string array, `StringToDouble`); (e) the date macro `BTB_HOLDOUT_START D'2026.07.01'` compared with `datetime` values; (f) structs with a `string` member (`BTB_E2Setup.event_id`) in dynamic arrays with `ArrayResize` reserve; (g) `const` accessor methods of `CBTB_E2Setups` called from `const` methods of the proxy book; (h) long string concatenations in `CBTB_E2Setups::CsvRow` and the extended `CBTB_ProxyBook::CsvRow`; (i) implicit `long`/`datetime`/`int` conversions in the E1 tick tests (target 0 warnings); (j) `input string InpE1DepD = BTB_E1_DEP_D_LIST` (macro as an input default).
+60. The Python E2 reference and the MQL5 code implement 42–54 independently; the byte-identical setup ledgers (`run_reference`) are the gate. If they differ, the Python reference and the V3 text decide, and the fix is recorded here.
 
 ---
 
@@ -676,6 +768,11 @@ No cell is picked as "best". E2 is expected to be **rare** (possibly a few dozen
 ---
 
 # Roadmap Update Log
+
+## 2026-09-30 — Step A: BTB-4 code complete (not compiled)
+- E1 (D = 1.0 / 1.5 / 2.0), E2 (ZigZag legs, spike, pushes and trend line, live bars) and the v2 study written in MQL5 and in the independent Python reference; setup ledgers `btb_setups_E2_<TF>.csv`; E0 regression tool.
+- TRE files unchanged (rename verification PASS). Python tests pass (67), including the owner-chart E2 test (V6) long and short.
+- Closures 35–60 in Section 11; Run Card Section 10 and the V2 configs added.
 
 ## 2026-09-30 — PART 2 (BTB-v2) authorized
 - Diagnosis of Part 1: E0 filled within seconds of the breakout (no real return); `MISSED_TP_FIRST` removed the textbook case; costs about 5% of R; gross already negative.

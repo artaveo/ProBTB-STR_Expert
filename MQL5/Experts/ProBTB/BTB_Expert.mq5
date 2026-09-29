@@ -1,6 +1,6 @@
 //+------------------------------------------------------------------+
 //| BTB_Expert.mq5                                                   |
-//| Pro BTB (Back To Breakeven) — BTB-1..3 research EA.              |
+//| Pro BTB (Back To Breakeven) — research EA (BTB-1..3 + BTB-4).     |
 //|                                                                  |
 //| This EA does NOT trade. In one Strategy Tester pass it           |
 //|  - validates the Phase 1 contract (symbol, sessions, costs),     |
@@ -9,24 +9,26 @@
 //|  - applies the late-spread block and spread-normal resume rule,  |
 //|  - detects L1-L4 breakout events on both timeframes,             |
 //|  - simulates Buy/Sell Limit proxies for R = 1, 2, 3 on ticks,    |
+//|    for E0 (Part 1), E1 (departure first, D = 1.0/1.5/2.0) and E2 |
+//|    (three legs, spike, pushes along a trend line), PART 2,       |
 //| and writes the run package to Common\Files\BTB\<ExperimentId>\.  |
 //+------------------------------------------------------------------+
 #property copyright   "Pro BTB"
-#property version     "1.00"
-#property description "BTB-1..3 — contract, data audit, breakout events and limit-order proxies (no trading)"
+#property version     "2.00"
+#property description "BTB-1..4 — contract, data audit, breakout events, E0/E1/E2 limit-order proxies (no trading)"
 
 #include "../../Include/ProBTB/BTB_Engine.mqh"
 
 //--- Run identity (DataManifest)
 input group "Run identity (DataManifest)"
-input string   InpExperimentId               = "BTB-RUN";        // ExperimentId
+input string   InpExperimentId               = "BTB-V2";         // ExperimentId
 input string   InpCodeCommitSHA              = "";               // CodeCommitSHA (git rev-parse HEAD)
 input string   InpRoadmapSHA256              = "";               // RoadmapSHA256 (sha256 of ProBTB_Roadmap.md)
 
 //--- Data audit (copy the dates from the tester)
 input group "Tick/data-quality audit"
 input datetime InpAuditRequestedStartDate    = D'2026.01.01';    // AuditRequestedStartDate (copy from tester)
-input datetime InpAuditRequestedEndDate      = D'2026.06.30';    // AuditRequestedEndDate (inclusive date; tester ToDate 2026.07.01)
+input datetime InpAuditRequestedEndDate      = D'2026.09.25';    // AuditRequestedEndDate (inclusive date; tester ToDate 2026.09.26)
 input string   InpClosedMarketCalendarFile   = "";               // ClosedMarketCalendarFile (Common\Files CSV, optional)
 input string   InpDataQuarantineFile         = "";               // DataQuarantineFile (raw-audit quarantine CSV, optional)
 
@@ -36,6 +38,15 @@ input double   InpStrategyPipSize            = 0.10;             // StrategyPipS
 input double   InpCommissionRatePercent      = 0.0016;           // CommissionRatePercent (%)
 input string   InpCostScheduleDate           = "2026-09-28";     // CostScheduleDate (YYYY-MM-DD)
 input bool     InpExportReferenceBars        = true;             // ExportReferenceBars (M1 CSV for the Python reference)
+
+//--- PART 2 (roadmap V5): pre-registered, not to be tuned
+input group "BTB-v2 entries E1 / E2 (pre-registered)"
+input string   InpE1DepD                     = BTB_E1_DEP_D_LIST; // E1_DepD (departure multiples; 1.0 primary)
+input double   InpE2ZigZagATR                = BTB_E2_ZIGZAG_ATR; // E2_ZigZagATR
+input double   InpE2SpikeATR                 = BTB_E2_SPIKE_ATR;  // E2_SpikeATR
+input int      InpE2SpikeBars                = BTB_E2_SPIKE_BARS; // E2_SpikeBars
+input double   InpE2LineTolATR               = BTB_E2_LINE_TOL_ATR; // E2_LineTolATR
+input int      InpE2MaxDays                  = BTB_E2_MAX_DAYS;   // E2_MaxDays
 
 #define BTB_TF_COUNT 2
 #define BTB_M1_FILE  "bars_M1_BID.csv"
@@ -75,6 +86,9 @@ CBTB_DayTracker        g_days;
 CBTB_LevelSource       g_levels;
 CBTB_LevelEngine       g_eng[BTB_TF_COUNT];
 CBTB_ProxyBook         g_book[BTB_TF_COUNT];
+CBTB_E2Setups          g_e2[BTB_TF_COUNT];
+BTB_E2Config           g_e2cfg;
+double                 g_deps[];
 int                    g_m1File = INVALID_HANDLE;
 long                   g_m1Count = 0;
 datetime               g_firstM1 = 0;
@@ -93,27 +107,36 @@ datetime               g_rangeEndExclusive = 0;
 bool                   g_initialized = false;
 string                 g_initTime = "";
 string                 g_eventsSha[BTB_TF_COUNT];
+string                 g_setupsSha[BTB_TF_COUNT];
 
 //+------------------------------------------------------------------+
 void RecordInputs(void)
   {
-   g_inputs.Add("ExperimentId", InpExperimentId, "BTB-RUN");
+   g_inputs.Add("ExperimentId", InpExperimentId, "BTB-V2");
    g_inputs.Add("CodeCommitSHA", InpCodeCommitSHA, "");
    g_inputs.Add("RoadmapSHA256", InpRoadmapSHA256, "");
    g_inputs.Add("AuditRequestedStartDate", TRE_IsoDate(InpAuditRequestedStartDate), "2026-01-01");
-   g_inputs.Add("AuditRequestedEndDate", TRE_IsoDate(InpAuditRequestedEndDate), "2026-06-30");
+   g_inputs.Add("AuditRequestedEndDate", TRE_IsoDate(InpAuditRequestedEndDate), "2026-09-25");
    g_inputs.Add("ClosedMarketCalendarFile", InpClosedMarketCalendarFile, "");
    g_inputs.Add("DataQuarantineFile", InpDataQuarantineFile, "");
    g_inputs.AddNum("StrategyPipSize", InpStrategyPipSize, 0.10);
    g_inputs.AddNum("CommissionRatePercent", InpCommissionRatePercent, TRE_BASELINE_COMMISSION_RATE_PERCENT);
    g_inputs.Add("CostScheduleDate", InpCostScheduleDate, "2026-09-28");
    g_inputs.AddBool("ExportReferenceBars", InpExportReferenceBars, true);
+   g_inputs.Add("E1_DepD", InpE1DepD, BTB_E1_DEP_D_LIST);
+   g_inputs.AddNum("E2_ZigZagATR", InpE2ZigZagATR, BTB_E2_ZIGZAG_ATR);
+   g_inputs.AddNum("E2_SpikeATR", InpE2SpikeATR, BTB_E2_SPIKE_ATR);
+   g_inputs.AddInt("E2_SpikeBars", InpE2SpikeBars, BTB_E2_SPIKE_BARS);
+   g_inputs.AddNum("E2_LineTolATR", InpE2LineTolATR, BTB_E2_LINE_TOL_ATR);
+   g_inputs.AddInt("E2_MaxDays", InpE2MaxDays, BTB_E2_MAX_DAYS);
    //--- frozen research decisions (roadmap 2); recorded, not inputs
    g_inputs.Add("SignalTimeframes", "M5,M15", "M5,M15");
    g_inputs.Add("SignalBarPriceSource", "BID", "BID");
    g_inputs.Add("StopExecutionProfile", "LIVE_NATIVE_STOP", "LIVE_NATIVE_STOP");
-   g_inputs.Add("EntryMode", "MODE1_LIMIT_AT_BREAKOUT_CLOSE", "MODE1_LIMIT_AT_BREAKOUT_CLOSE");
+   g_inputs.Add("EntryMode", "MODE1_LIMIT_AT_BREAKOUT_CLOSE", "MODE1_LIMIT_AT_BREAKOUT_CLOSE");  // limit price of every mode
    g_inputs.Add("RTargets", "1,2,3", "1,2,3");
+   g_inputs.Add("EntryModes", "E0,E1,E2", "E0,E1,E2");
+   g_inputs.Add("HoldoutStart", "2026-07-01", "2026-07-01");
    g_inputs.Add("Windows", "FULL,NY", "FULL,NY");
    g_inputs.Add("LateBlockStart", "21:30", "21:30");
    g_inputs.Add("NYWindow", "16:30-21:30", "16:30-21:30");
@@ -196,7 +219,19 @@ int OnInit(void)
                    g_rangeStart, g_rangeEndExclusive, "TESTER_CopyTicksRange_COPY_TICKS_ALL");
    g_rawDriver.Init(_Symbol, GetPointer(g_rawAudit));
 
-   //--- BTB layers: one day tracker and level source, one engine and proxy book per timeframe
+   //--- PART 2 parameters
+   if(!BTB_ParseDepList(InpE1DepD, g_deps, err))
+      return Fail(err);
+   BTB_E2ConfigDefaults(g_e2cfg);
+   g_e2cfg.zigzag_atr = InpE2ZigZagATR;
+   g_e2cfg.spike_atr = InpE2SpikeATR;
+   g_e2cfg.spike_bars = InpE2SpikeBars;
+   g_e2cfg.line_tol_atr = InpE2LineTolATR;
+   g_e2cfg.max_days = InpE2MaxDays;
+   if(!(g_e2cfg.zigzag_atr > 0.0) || !(g_e2cfg.spike_atr > 0.0) || g_e2cfg.spike_bars < 1 || !(g_e2cfg.line_tol_atr > 0.0) || g_e2cfg.max_days < 1)
+      return Fail("E2 parameters must be positive");
+
+   //--- BTB layers: one day tracker and level source, one engine, E2 machine and proxy book per timeframe
    g_econ = new CTRE_MT5Economics(_Symbol);
    g_days.Init(GetPointer(g_sched));
    g_levels.Init(GetPointer(g_days));
@@ -206,6 +241,8 @@ int OnInit(void)
       if(!g_eng[i].Init(g_tfs[i], GetPointer(g_days), GetPointer(g_levels), g_spec.digits))
          return Fail("cannot initialise the level engine for " + TRE_TimeframeName(g_tfs[i]));
       g_book[i].Init(GetPointer(g_eng[i]), g_econ, g_spec, g_costs, InpStrategyPipSize, contractSize);
+      g_e2[i].Init(TRE_TimeframeName(g_tfs[i]), TRE_TimeframeSeconds(g_tfs[i]), g_spec.digits, g_e2cfg, GetPointer(g_days));
+      g_book[i].ConfigureV2(g_deps, GetPointer(g_e2[i]));
      }
    g_m1.Init(TRE_PRICE_BID, g_spec.digits);
    g_m1Count = 0;
@@ -284,6 +321,7 @@ void OnTick(void)
       for(int i = 0; i < BTB_TF_COUNT; i++)
         {
          g_eng[i].OnTime(q.time);
+         g_e2[i].Sync(GetPointer(g_eng[i]));
          g_book[i].OnEngineUpdate();
          g_book[i].OnQuote(q);
         }
@@ -350,6 +388,18 @@ void WriteContractSnapshots(void)
    j.KStr("exits", "TP, SL, SESSION_CLOSE (21:30), GAP_* (tick gap > 300 s), END_OF_DATA; stop wins on one tick");
    j.KStr("size", "1-lot proxy per event and R; no portfolio, no admission gate");
    j.EndObject();
+   j.KObj("btb_v2_contract");
+   j.KStr("contract_id", BTB_V2_CONTRACT_ID);
+   j.KStr("e0", "Part 1 proxy (above), unchanged");
+   j.KStr("e1", "reference tick = first tick at/after the breakout close: SL_ref = breakout extreme -/+ its spread; armed when the Bid reaches P +/- D x |P - SL_ref| (aligned away from P); "
+          "the arming tick is the placement tick (s0, SL, TP as E0); before arming a stop trigger on SL_ref = INVALIDATED_BEFORE_ARM; armed: fill / stop trigger "
+          "(INVALIDATED_BEFORE_FILL) / 21:30 (CANCELLED_WINDOW_END); unarmed at 21:30 = NOT_ARMED_WINDOW_END; no 12-bar expiry, no MISSED_TP_FIRST; D = " + InpE1DepD);
+   j.KStr("e2", "bar-level setup (btb_setups_E2_<TF>.csv): ZigZag legs (>= 3, higher highs / higher lows beyond the zone), spike >= " +
+          TRE_NumStr(g_e2cfg.spike_atr) + " x ATR14 within " + IntegerToString(g_e2cfg.spike_bars) + " bars, 2/2 fractal pushes, trend line; "
+          "the limit at P is live only on bars with |y - P| <= " + TRE_NumStr(g_e2cfg.line_tol_atr) + " x ATR14 inside the FULL window; "
+          "s0 / SL / TP from the first live tick; window of the fill decides FULL / NY; life " + IntegerToString(g_e2cfg.max_days) + " trading days");
+   j.KStr("sample", "DESIGN before 2026-07-01, HOLDOUT from 2026-07-01 (break-candle date)");
+   j.EndObject();
    j.EndObject();
    g_out.Write("execution_contract.json", j.Text());
   }
@@ -366,6 +416,8 @@ string FinalizeLedgers(void)
    for(int i = 0; i < BTB_TF_COUNT; i++)
      {
       g_eng[i].Flush();
+      g_e2[i].Sync(GetPointer(g_eng[i]));
+      g_e2[i].Finish();
       g_book[i].OnEngineUpdate();
       g_book[i].Finish();
      }
@@ -394,6 +446,9 @@ string FinalizeLedgers(void)
       if(!g_book[i].WriteCsv(g_out.Dir() + "btb_proxies_" + tf + ".csv", q))
          PrintFormat("BTB: cannot write btb_proxies_%s.csv", tf);
       g_out.RegisterFile("btb_proxies_" + tf + ".csv");
+      if(!g_e2[i].WriteCsv(g_out.Dir() + "btb_setups_E2_" + tf + ".csv", q))
+         PrintFormat("BTB: cannot write btb_setups_E2_%s.csv", tf);
+      g_setupsSha[i] = g_out.RegisterFile("btb_setups_E2_" + tf + ".csv");
      }
 
    //--- configuration consumed by the independent Python reference
@@ -415,6 +470,15 @@ string FinalizeLedgers(void)
    j.KInt("atr_period", BTB_ATR_PERIOD);
    j.KStr("quarantine_file", "data_quarantine_windows.csv");
    j.KStr("declared_quarantine_file", InpDataQuarantineFile);
+   j.KStr("holdout_start", "2026-07-01");
+   j.KObj("e2");
+   j.KNum("zigzag_atr", g_e2cfg.zigzag_atr, 8);
+   j.KNum("spike_atr", g_e2cfg.spike_atr, 8);
+   j.KInt("spike_bars", g_e2cfg.spike_bars);
+   j.KNum("line_tol_atr", g_e2cfg.line_tol_atr, 8);
+   j.KInt("max_days", g_e2cfg.max_days);
+   j.EndObject();
+   j.KStr("e1_dep_d", InpE1DepD);
    j.EndObject();
    g_out.Write("reference_config.json", j.Text());
 
@@ -447,7 +511,15 @@ string FinalizeLedgers(void)
       j.KInt("MISSED_TP_FIRST", g_book[i].CountState(BTB_PX_MISSED_TP_FIRST));
       j.KInt("CANCELLED_WINDOW_END", g_book[i].CountState(BTB_PX_CANCELLED_WINDOW_END));
       j.KInt("INVALID_STOP_GEOMETRY", g_book[i].CountState(BTB_PX_INVALID_STOP_GEOMETRY));
+      j.KInt("proxies_E0", g_book[i].CountMode(BTB_MODE_E0));
+      j.KInt("proxies_E1", g_book[i].CountMode(BTB_MODE_E1));
+      j.KInt("proxies_E2", g_book[i].CountMode(BTB_MODE_E2));
+      j.KInt("closed_E0", g_book[i].CountModeState(BTB_MODE_E0, BTB_PX_CLOSED));
+      j.KInt("closed_E1", g_book[i].CountModeState(BTB_MODE_E1, BTB_PX_CLOSED));
+      j.KInt("closed_E2", g_book[i].CountModeState(BTB_MODE_E2, BTB_PX_CLOSED));
+      j.KInt("e2_setups", g_e2[i].SetupCount());
       j.KStr("events_sha256", g_eventsSha[i]);
+      j.KStr("setups_E2_sha256", g_setupsSha[i]);
       j.EndObject();
      }
    j.EndArray();
@@ -501,9 +573,10 @@ void WriteFinalPackage(const int deinitReason)
    j.KStr("schema_version", TRE_MANIFEST_SCHEMA_VERSION);
    j.KStr("engine", TRE_ENGINE_NAME);
    j.KStr("strategy", "ProBTB");
-   j.KStr("phase", "BTB-1..3");
+   j.KStr("phase", "BTB-4 (PART 2: E0 / E1 / E2)");
    j.KStr("contract_id", TRE_PHASE1_CONTRACT_ID);
    j.KStr("btb_contract_id", BTB_CONTRACT_ID);
+   j.KStr("btb_v2_contract_id", BTB_V2_CONTRACT_ID);
    j.KStr("experiment_id", InpExperimentId);
    j.KStr("run_context", TRE_RunContextName(TRE_CONTEXT_RESEARCH));
    j.KStr("init_broker_time", g_initTime);
@@ -559,7 +632,8 @@ void WriteFinalPackage(const int deinitReason)
    j.KArr("scenario_ids");
    j.Str("BASELINE");
    j.EndArray();
-   j.KInt("declared_trial_count", 48);
+   j.KInt("declared_trial_count", 36);
+   j.KStr("trial_note", "36 primary cells (E0 / E1 D=1.0 / E2 x TF x window x R); HOLDOUT verdict over the 24 E1 + E2 cells");
    j.KArr("random_seeds");
    j.EndArray();
    j.KStr("ledger_checksum", ledgerChecksum);
@@ -567,6 +641,10 @@ void WriteFinalPackage(const int deinitReason)
    j.KObj("event_ledgers_sha256");
    for(int i = 0; i < BTB_TF_COUNT; i++)
       j.KStr(TRE_TimeframeName(g_tfs[i]), g_eventsSha[i]);
+   j.EndObject();
+   j.KObj("setup_ledgers_sha256");
+   for(int i = 0; i < BTB_TF_COUNT; i++)
+      j.KStr(TRE_TimeframeName(g_tfs[i]), g_setupsSha[i]);
    j.EndObject();
    j.Key("inputs");
    g_inputs.WriteJson(j);
@@ -580,8 +658,10 @@ void WriteFinalPackage(const int deinitReason)
                TRE_DataGateName(g_rawAudit.Gate()), TRE_NumStr(g_rawAudit.FallbackShare(), 6), TRE_NumStr(g_rawAudit.QuarantineShare(), 6),
                g_rawAudit.CriticalGapCount(), g_rawAudit.ClosureCount());
    for(int i = 0; i < BTB_TF_COUNT; i++)
-      PrintFormat("BTB %s: bars=%d event_rows=%d EVENT=%d proxies=%d closed=%d", TRE_TimeframeName(g_tfs[i]), g_eng[i].BarCount(),
-                  g_eng[i].EventCount(), g_eng[i].CountStatus(BTB_EV_EVENT), g_book[i].ProxyCount(), g_book[i].CountState(BTB_PX_CLOSED));
+      PrintFormat("BTB %s: bars=%d event_rows=%d EVENT=%d e2_setups=%d proxies=%d closed E0/E1/E2=%d/%d/%d", TRE_TimeframeName(g_tfs[i]),
+                  g_eng[i].BarCount(), g_eng[i].EventCount(), g_eng[i].CountStatus(BTB_EV_EVENT), g_e2[i].SetupCount(), g_book[i].ProxyCount(),
+                  g_book[i].CountModeState(BTB_MODE_E0, BTB_PX_CLOSED), g_book[i].CountModeState(BTB_MODE_E1, BTB_PX_CLOSED),
+                  g_book[i].CountModeState(BTB_MODE_E2, BTB_PX_CLOSED));
   }
 
 //+------------------------------------------------------------------+
