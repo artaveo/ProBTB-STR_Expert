@@ -67,6 +67,21 @@ class TestCells(unittest.TestCase):
         self.assertEqual(s["by_side"]["LONG"]["analysed"], 2)
         self.assertEqual(s["exit_reasons"], {"SL": 1, "TP": 1})
 
+    def test_drawdown_and_losing_streak(self):
+        def row(exit_time, net):
+            return {"exit_time": exit_time, "fill_time": exit_time, "net_r": str(net)}
+        # given out of order; exit order is +2, -1, -1, +0.5, -3, +1 -> equity 2, 1, 0, 0.5, -2.5, -1.5
+        rows = [row("2026-02-05T10:00:00", -3), row("2026-02-01T10:00:00", 2), row("2026-02-06T10:00:00", 1),
+                row("2026-02-02T10:00:00", -1), row("2026-02-04T10:00:00", 0.5), row("2026-02-03T10:00:00", -1)]
+        d = study.drawdown_stats(rows)
+        self.assertAlmostEqual(d["max_drawdown_r"], 4.5)        # peak 2 -> trough -2.5
+        self.assertEqual(d["max_losing_streak"], 2)
+        # losses from the start count from the 0 start line
+        d = study.drawdown_stats([row("2026-02-01T10:00:00", -1), row("2026-02-02T10:00:00", -1)])
+        self.assertAlmostEqual(d["max_drawdown_r"], 2.0)
+        self.assertEqual(d["max_losing_streak"], 2)
+        self.assertEqual(study.drawdown_stats([]), {"max_drawdown_r": None, "max_losing_streak": 0})
+
     def test_48_cells_holm_and_determinism(self):
         rng = random.Random(11)
         events, proxies = {"M5": [], "M15": []}, {"M5": [], "M15": []}

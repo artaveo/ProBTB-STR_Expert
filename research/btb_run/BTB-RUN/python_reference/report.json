@@ -54,6 +54,8 @@
         }
       },
       "mean_cost_share_r": 0.05994087837837838,
+      "max_drawdown_r": 17.068056000000002,
+      "max_losing_streak": 6,
       "level": "L1",
       "tf": "M5",
       "window": "FULL",
@@ -98,6 +100,8 @@
         }
       },
       "mean_cost_share_r": 0.06470642666666666,
+      "max_drawdown_r": 12.156594,
+      "max_losing_streak": 8,
       "level": "L1",
       "tf": "M5",
       "window": "FULL",
@@ -142,6 +146,8 @@
         }
       },
       "mean_cost_share_r": 0.06470642666666666,
+      "max_drawdown_r": 21.338287,
+      "max_losing_streak": 9,
       "level": "L1",
       "tf": "M5",
       "window": "FULL",
@@ -186,6 +192,8 @@
         }
       },
       "mean_cost_share_r": 0.042118631578947366,
+      "max_drawdown_r": 9.674703,
+      "max_losing_streak": 7,
       "level": "L1",
       "tf": "M5",
       "window": "NY",
@@ -230,6 +238,8 @@
         }
       },
       "mean_cost_share_r": 0.042118631578947366,
+      "max_drawdown_r": 9.726037,
+      "max_losing_streak": 7,
       "level": "L1",
       "tf": "M5",
       "window": "NY",
@@ -274,6 +284,8 @@
         }
       },
       "mean_cost_share_r": 0.042118631578947366,
+      "max_drawdown_r": 11.682763999999999,
+      "max_losing_streak": 9,
       "level": "L1",
       "tf": "M5",
       "window": "NY",
@@ -320,6 +332,8 @@
         }
       },
       "mean_cost_share_r": 0.04060628169014084,
+      "max_drawdown_r": 12.952563999999997,
+      "max_losing_streak": 6,
       "level": "L1",
       "tf": "M15",
       "window": "FULL",
@@ -365,6 +379,8 @@
         }
       },
       "mean_cost_share_r": 0.04036691666666666,
+      "max_drawdown_r": 8.102483000000001,
+      "max_losing_streak": 6,
       "level": "L1",
       "tf": "M15",
       "window": "FULL",
@@ -410,6 +426,8 @@
         }
       },
       "mean_cost_share_r": 0.04036691666666666,
+      "max_drawdown_r": 9.483217,
+      "max_losing_streak": 6,
       "level": "L1",
       "tf": "M15",
       "window": "FULL",
@@ -454,6 +472,8 @@
         }
       },
       "mean_cost_share_r": 0.027646749999999998,
+      "max_drawdown_r": 6.312341,
+      "max_losing_streak": 5,
       "level": "L1",
       "tf": "M15",
       "window": "NY",
@@ -498,6 +518,8 @@
         }
       },
       "mean_cost_share_r": 0.027646749999999998,
+      "max_drawdown_r": 6.484245,
+      "max_losing_streak": 5,
       "level": "L1",
       "tf": "M15",
       "window": "NY",
@@ -541,6 +563,8 @@
         }
       },
       "mean_cost_share_r": 0.027646749999999998,
+      "max_drawdown_r": 6.53578,
+      "max_losing_streak": 5,
       "level": "L1",
       "tf": "M15",
       "window": "NY",
@@ -586,6 +610,8 @@
         }
       },
       "mean_cost_share_r": 0.07341086885245901,
+      "max_drawdown_r": 22.098974999999996,
+      "max_losing_streak": 9,
       "level": "L2",
       "tf": "M5",
       "window": "FULL",
@@ -631,6 +657,8 @@
         }
       },
       "mean_cost_share_r": 0.07427520325203252,
+      "max_drawdown_r": 20.697087000000003,
+      "max_losing_streak": 12,
       "level": "L2",
       "tf": "M5",
       "window": "FULL",
@@ -677,6 +705,8 @@
         }
       },
       "mean_cost_share_r": 0.07436010483870968,
+      "max_drawdown_r": 14.652224,
+      "max_losing_streak": 13,
       "level": "L2",
       "tf": "M5",
       "window": "FULL",
@@ -721,6 +751,8 @@
         }
       },
       "mean_cost_share_r": 0.04812848,
+      "max_drawdown_r": 4.065988000000001,
+      "max_losing_streak": 4,
       "level": "L2",
       "tf": "M5",
       "window": "NY",
@@ -765,6 +797,8 @@
         }
       },
       "mean_cost_share_r": 0.04812848,
+      "max_drawdown_r": 5.189029000000001,
+      "max_losing_streak": 4,
       "level": "L2",
       "tf": "M5",
       "window": "NY",
@@ -809,6 +843,8 @@
         }
       },
       "mean_cost_share_r": 0.04812848,
+      "max_drawdown_r": 7.360309999999999,
+      "max_losing_streak": 5,
       "level": "L2",
       "tf": "M5",
       "window": "NY",
@@ -854,6 +890,8 @@
         }
       },
       "mean_cost_share_r": 0.05048662711864407,
+      "max_drawdown_r": 10.107089,
+      "max_losing_streak": 8,
       "level": "L2",
       "tf": "M15",
       "window": "FULL",
@@ -899,6 +937,8 @@
         }
       },
       "mean_cost_share_r": 0.05038289166666667,
+      "max_drawdown_r": 12.179386999999998,
+      "max_losing_streak": 8,
       "level": "L2",
       "tf": "M15",
       "window": "FULL",
@@ -944,6 +984,8 @@
         }
       },
       "mean_cost_share_r": 0.05090667768595041,
+      "max_drawdown_r": 13.088863,
+      "max_losing_streak": 12,
       "level": "L2",
       "tf": "M15",
       "window": "FULL",
@@ -988,6 +1030,8 @@
         }
       },
       "mean_cost_share_r": 0.03390288461538461,
+      "max_drawdown_r": 4.136152,
+      "max_losing_streak": 3,
       "level": "L2",
       "tf": "M15",
       "window": "NY",
@@ -1032,6 +1076,8 @@
         }
       },
       "mean_cost_share_r": 0.03390288461538461,
+      "max_drawdown_r": 6.609452,
+      "max_losing_streak": 4,
       "level": "L2",
       "tf": "M15",
       "window": "NY",
@@ -1075,6 +1121,8 @@
         }
       },
       "mean_cost_share_r": 0.03390288461538461,
+      "max_drawdown_r": 8.259345,
+      "max_losing_streak": 4,
       "level": "L2",
       "tf": "M15",
       "window": "NY",
@@ -1120,6 +1168,8 @@
         }
       },
       "mean_cost_share_r": 0.07480571358024692,
+      "max_drawdown_r": 63.701300999999994,
+      "max_losing_streak": 10,
       "level": "L3",
       "tf": "M5",
       "window": "FULL",
@@ -1166,6 +1216,8 @@
         }
       },
       "mean_cost_share_r": 0.07719738740920097,
+      "max_drawdown_r": 83.87979199999997,
+      "max_losing_streak": 13,
       "level": "L3",
       "tf": "M5",
       "window": "FULL",
@@ -1212,6 +1264,8 @@
         }
       },
       "mean_cost_share_r": 0.0772004313253012,
+      "max_drawdown_r": 62.16739499999997,
+      "max_losing_streak": 14,
       "level": "L3",
       "tf": "M5",
       "window": "FULL",
@@ -1257,6 +1311,8 @@
         }
       },
       "mean_cost_share_r": 0.05480221367521367,
+      "max_drawdown_r": 21.553228,
+      "max_losing_streak": 9,
       "level": "L3",
       "tf": "M5",
       "window": "NY",
@@ -1302,6 +1358,8 @@
         }
       },
       "mean_cost_share_r": 0.05895310084033614,
+      "max_drawdown_r": 49.41870200000004,
+      "max_losing_streak": 9,
       "level": "L3",
       "tf": "M5",
       "window": "NY",
@@ -1347,6 +1405,8 @@
         }
       },
       "mean_cost_share_r": 0.05895310084033614,
+      "max_drawdown_r": 56.46329500000002,
+      "max_losing_streak": 9,
       "level": "L3",
       "tf": "M5",
       "window": "NY",
@@ -1392,6 +1452,8 @@
         }
       },
       "mean_cost_share_r": 0.04766883898305085,
+      "max_drawdown_r": 38.89420799999999,
+      "max_losing_streak": 8,
       "level": "L3",
       "tf": "M15",
       "window": "FULL",
@@ -1437,6 +1499,8 @@
         }
       },
       "mean_cost_share_r": 0.04804642296918767,
+      "max_drawdown_r": 51.68590999999998,
+      "max_losing_streak": 10,
       "level": "L3",
       "tf": "M15",
       "window": "FULL",
@@ -1482,6 +1546,8 @@
         }
       },
       "mean_cost_share_r": 0.04849063509749303,
+      "max_drawdown_r": 51.436594000000014,
+      "max_losing_streak": 11,
       "level": "L3",
       "tf": "M15",
       "window": "FULL",
@@ -1526,6 +1592,8 @@
         }
       },
       "mean_cost_share_r": 0.037959603603603606,
+      "max_drawdown_r": 18.925133000000006,
+      "max_losing_streak": 6,
       "level": "L3",
       "tf": "M15",
       "window": "NY",
@@ -1570,6 +1638,8 @@
         }
       },
       "mean_cost_share_r": 0.037959603603603606,
+      "max_drawdown_r": 21.118291,
+      "max_losing_streak": 6,
       "level": "L3",
       "tf": "M15",
       "window": "NY",
@@ -1614,6 +1684,8 @@
         }
       },
       "mean_cost_share_r": 0.037959603603603606,
+      "max_drawdown_r": 19.802032999999998,
+      "max_losing_streak": 6,
       "level": "L3",
       "tf": "M15",
       "window": "NY",
@@ -1659,6 +1731,8 @@
         }
       },
       "mean_cost_share_r": 0.11979976923076922,
+      "max_drawdown_r": 15.615706000000001,
+      "max_losing_streak": 7,
       "level": "L4",
       "tf": "M5",
       "window": "FULL",
@@ -1705,6 +1779,8 @@
         }
       },
       "mean_cost_share_r": 0.11979976923076922,
+      "max_drawdown_r": 14.631952,
+      "max_losing_streak": 9,
       "level": "L4",
       "tf": "M5",
       "window": "FULL",
@@ -1750,6 +1826,8 @@
         }
       },
       "mean_cost_share_r": 0.11979976923076922,
+      "max_drawdown_r": 10.983933,
+      "max_losing_streak": 9,
       "level": "L4",
       "tf": "M5",
       "window": "FULL",
@@ -1794,6 +1872,8 @@
         }
       },
       "mean_cost_share_r": 0.126031,
+      "max_drawdown_r": 4.230478,
+      "max_losing_streak": 4,
       "level": "L4",
       "tf": "M5",
       "window": "NY",
@@ -1838,6 +1918,8 @@
         }
       },
       "mean_cost_share_r": 0.126031,
+      "max_drawdown_r": 4.132286,
+      "max_losing_streak": 4,
       "level": "L4",
       "tf": "M5",
       "window": "NY",
@@ -1882,6 +1964,8 @@
         }
       },
       "mean_cost_share_r": 0.126031,
+      "max_drawdown_r": 4.132286,
+      "max_losing_streak": 4,
       "level": "L4",
       "tf": "M5",
       "window": "NY",
@@ -1925,6 +2009,8 @@
         }
       },
       "mean_cost_share_r": 0.050618555555555556,
+      "max_drawdown_r": 4.0140970000000005,
+      "max_losing_streak": 2,
       "level": "L4",
       "tf": "M15",
       "window": "FULL",
@@ -1969,6 +2055,8 @@
         }
       },
       "mean_cost_share_r": 0.050618555555555556,
+      "max_drawdown_r": 8.024415,
+      "max_losing_streak": 8,
       "level": "L4",
       "tf": "M15",
       "window": "FULL",
@@ -2013,6 +2101,8 @@
         }
       },
       "mean_cost_share_r": 0.050618555555555556,
+      "max_drawdown_r": 8.024415000000001,
+      "max_losing_streak": 8,
       "level": "L4",
       "tf": "M15",
       "window": "FULL",
@@ -2055,6 +2145,8 @@
         }
       },
       "mean_cost_share_r": 0.027958333333333335,
+      "max_drawdown_r": 0.0,
+      "max_losing_streak": 0,
       "level": "L4",
       "tf": "M15",
       "window": "NY",
@@ -2098,6 +2190,8 @@
         }
       },
       "mean_cost_share_r": 0.027958333333333335,
+      "max_drawdown_r": 1.0,
+      "max_losing_streak": 1,
       "level": "L4",
       "tf": "M15",
       "window": "NY",
@@ -2141,6 +2235,8 @@
         }
       },
       "mean_cost_share_r": 0.027958333333333335,
+      "max_drawdown_r": 1.0,
+      "max_losing_streak": 1,
       "level": "L4",
       "tf": "M15",
       "window": "NY",
