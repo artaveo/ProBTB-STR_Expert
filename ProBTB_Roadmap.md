@@ -2,7 +2,7 @@
 
 Owner repository: `https://github.com/artaveo/ProBTB-STR_Expert` · owner folder `E:\Trade\ProBTB-STR_Expert` · commits go straight to `main` (no branches, no PRs).
 
-Status: **BTB-1, BTB-2 and BTB-3 are COMPLETE** (Step A code 2026-09-29, Step B build and run 2026-09-29; completion records in Section 9, report in `research/btb_run/BTB-RUN/python_reference/report.md`). **PART 2 (BTB-v2), phase BTB-4: Step A CODE COMPLETE (not compiled), 2026-09-30** — record in Section 9, closures 35–60 in Section 11, procedure in `docs/BTB_RunCard.md` Section 10. **Next: BTB-4 Step B** (owner: `git pull`, then Cowork).
+Status: **BTB-1, BTB-2 and BTB-3 are COMPLETE** (Step A code 2026-09-29, Step B build and run 2026-09-29; completion records in Section 9, report in `research/btb_run/BTB-RUN/python_reference/report.md`). **PART 2 (BTB-v2), phase BTB-4: COMPLETE, 2026-09-30** (Step A code, Step B build and run) — records in Section 9, closures 35–63 in Section 11, report in `research/btb_v2/BTB-V2/python_reference/report.md`. HOLDOUT: no cell CONFIRMED. The owner decides whether to continue.
 
 | Step | Who | What |
 |---|---|---|
@@ -439,6 +439,38 @@ Result: CODE COMPLETE. Step B: follow docs/BTB_RunCard.md Section 10; check the 
   first (BTB-4)" items first.
 ```
 
+```
+BTB-4 — COMPLETE
+Date: 2026-09-30
+Step: B (Claude Code desktop session on the owner's machine, MT5 build 6182)
+Files changed: python/btb_reference/study.py, python/tests/test_btb_study.py (report only, closures 62-63);
+  research/btb_v2/ (run packet); docs/BTB_RunCard.md (checklist); no file under MQL5/ changed.
+Summary:
+  Install + compile: BTB_Tests, BTB_EventReplay, TRE_RawTickAudit, BTB_Expert -> each 0 errors, 0 warnings.
+  BTB_Tests: RESULT: PASS passed=455 failed=0 build=6182 (incl. owner-chart E2 test, E1 and short mirrors).
+  Python: Ran 68 tests, OK.
+  Raw audit 2026-01-01..2026-09-25: 127,624,865 ticks, fallback 0.15 %, quarantine 0.15 %, 7 critical gaps
+    all quarantined -> DATA-PASSED.
+  Tester (BTB_RUN_V2.set, only CodeCommitSHA=9b95d1e and RoadmapSHA256 filled): 127,628,490 ticks,
+    261,121 M1 bars, test time 3 min; data gate DATA-PASSED (fallback 0.13 %, quarantine 0.13 %);
+    190 days (189 NORMAL, 1 WARMUP). M5: 52,239 bars, 1,262 event rows (1,218 EVENT), 1,218 E2 setups,
+    16,554 proxies. M15: 17,418 bars, 1,087 event rows (1,048 EVENT), 1,048 E2 setups, 14,208 proxies.
+  run_reference: btb_days (190), btb_events_M5 (1,262) / M15 (1,087), btb_setups_E2_M5 (1,218) / M15 (1,048)
+    IDENTICAL -> RECONCILIATION PASS, ledger checksum 7a12b675…d9e8.
+  E0 regression vs Part 1: btb_days IDENTICAL (127); E0 DESIGN proxy rows IDENTICAL (M5 2,037, M15 1,725);
+    event ledgers identical except the last Part 1 row of each TF (break_close of the 2026-06-30 23:55 M5 /
+    23:45 M15 bar), explained by the Part 1 end-of-data cut (closure 61). The tool exits 1 on that row.
+Result:
+  DESIGN (36 primary cells, Holm 36): INCONCLUSIVE_LOW_N 18, NEGATIVE 5, OPEN 13, POSITIVE_EVIDENCE 0.
+  HOLDOUT (decisive, Holm 24): CONFIRMED 0, NOT_CONFIRMED 6 (E1 M5/M15 FULL R1-R3),
+    INCONCLUSIVE_LOW_N 18 (E1 NY cells, all E2 cells), BASELINE 12 (E0).
+  E1 (D = 1.0): DESIGN positive on M15 FULL (+0.24 / +0.25 / +0.21 R) but HOLDOUT -0.02 / -0.04 / +0.07 R,
+    M5 FULL HOLDOUT -0.08 / -0.12 / -0.06 R. The Part 1 V0 hypothesis is not confirmed on the holdout.
+  E2: 2,266 setups (M5 1,218, M15 1,048); 2,181 STRUCTURE_FAILED, 36 NO_SPIKE, 25 NO_LEG1, 24 LINE_PASSED;
+    23 reached a live bar, 0 LIVE_TO_FILL, 0 fills. E2 is untestable on this data as specified.
+  The owner decides whether to continue.
+```
+
 ## 10. Operator notes (owner's machine, verified 2026-09-29)
 
 | Item | Value |
@@ -562,6 +594,12 @@ Step B, 2026-09-29.
 
 59. (a) Two-dimensional array parameters `const double &x[][4]` / `[][2]` and global 2-D initialisers in the generated fixture block of `BTB_Tests.mq5`; (b) the class pointer `CBTB_E2Setups *` held in `CBTB_ProxyBook` and `CBtbFlow`, compared with `NULL` and dereferenced with `.`; (c) `ConfigureV2(const double &deps[], CBTB_E2Setups *e2)` called with `GetPointer(g_e2[i])` of a global object array and with `NULL`; (d) `BTB_ParseDepList` (`StringSplit` into a string array, `StringToDouble`); (e) the date macro `BTB_HOLDOUT_START D'2026.07.01'` compared with `datetime` values; (f) structs with a `string` member (`BTB_E2Setup.event_id`) in dynamic arrays with `ArrayResize` reserve; (g) `const` accessor methods of `CBTB_E2Setups` called from `const` methods of the proxy book; (h) long string concatenations in `CBTB_E2Setups::CsvRow` and the extended `CBTB_ProxyBook::CsvRow`; (i) implicit `long`/`datetime`/`int` conversions in the E1 tick tests (target 0 warnings); (j) `input string InpE1DepD = BTB_E1_DEP_D_LIST` (macro as an input default).
 60. The Python E2 reference and the MQL5 code implement 42–54 independently; the byte-identical setup ledgers (`run_reference`) are the gate. If they differ, the Python reference and the V3 text decide, and the fix is recorded here.
+
+**BTB-4 (PART 2), Step B, 2026-09-30.**
+
+61. Items 59 (a)–(j) resolved without code change: 0 errors / 0 warnings, `BTB_Tests` 455/455. The setup ledgers were byte-identical on the first run, so 60 needed no fix. **E0 regression:** days and every E0 DESIGN proxy row (first 36 columns) are identical to Part 1. The event ledgers differ in exactly one row per TF: the last Part 1 row, i.e. the breakout bar that closes at 2026-07-01 00:00 (M5 bar 06-30 23:55, M15 bar 06-30 23:45). Its `break_close` was 4007.58 in Part 1 and is 4007.59 now. Cause: the Part 1 tester (ToDate 2026.07.01) stopped at the tick 2026-06-30 23:59:58.909, while the data contain ticks up to 23:59:59.064 (raw audit). The Part 1 M1 bar 23:59 has 498 ticks, and the v2 bar has 500. This is a Part 1 end-of-data cut, not a code change. The row is outside both windows (`in_full = in_ny = 0`), so it has no proxy, and no statistic of Part 1 or BTB-4 changes. The v2 pass has no such cut (last processed tick 2026-09-25 23:59:45 = raw audit). `regression.py` is left strict (it exits 1 on that row); the gate is recorded here as passed with this explanation.
+62. Report only (no statistic changes): the v2 funnel counted E0/E1 armed orders over all windows, so NY rows showed the FULL count (for example `173 → 679 → 170`). E0/E1 rows carry the window of the breakout close, so armed orders are now counted inside the cell's window. E2 keeps counting live rows over all windows, because an unfilled E2 row has no window (closure 54). A unit test was added.
+63. Report only, owner request (as 34): `report.md` v2 has a second table "Exits and risk per primary cell". For DESIGN and HOLDOUT it lists fills, TP, SL, 21:30 closes, win rate, total net R, Max DD R and max losing streak. Report regenerated from the run package; no tester re-run. Python tests: 68 OK.
 
 ---
 
@@ -768,6 +806,11 @@ No cell is picked as "best". E2 is expected to be **rare** (possibly a few dozen
 ---
 
 # Roadmap Update Log
+
+## 2026-09-30 — Step B: BTB-4 complete
+- 4 programs 0 errors / 0 warnings; BTB_Tests 455 passed, 0 failed; Python 68 OK; raw audit and tester DATA-PASSED (2026-01-01..09-25).
+- Ledgers byte-identical (days, events, E2 setups); E0 DESIGN proxies identical to Part 1 (one explained event row per TF, closure 61).
+- HOLDOUT: 0 CONFIRMED, 6 NOT_CONFIRMED (E1 FULL), 18 INCONCLUSIVE_LOW_N, 12 BASELINE. E2: 2,266 setups, 0 fills. Run packet in `research/btb_v2/`. Closures 61–63.
 
 ## 2026-09-30 — Step A: BTB-4 code complete (not compiled)
 - E1 (D = 1.0 / 1.5 / 2.0), E2 (ZigZag legs, spike, pushes and trend line, live bars) and the v2 study written in MQL5 and in the independent Python reference; setup ledgers `btb_setups_E2_<TF>.csv`; E0 regression tool.

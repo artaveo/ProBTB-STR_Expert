@@ -238,11 +238,13 @@ Copy the package (with `python_reference\`) to `$Repo\research\btb_v2\BTB-V2\`; 
 
 ### 10.5 Gate checklist (BTB-4)
 
-- [ ] 4 programs compile: 0 errors, 0 warnings
-- [ ] `btb_tests.txt`: `RESULT: PASS ... failed=0` (includes the owner-chart E2 test)
-- [ ] Python tests: OK
-- [ ] Raw audit and tester package: `DATA-PASSED` for 2026-01-01..2026-09-25
-- [ ] `manifest.json` → `inputs.non_default_inputs` lists only `CodeCommitSHA` and `RoadmapSHA256`
-- [ ] `run_reference`: `RECONCILIATION PASS` (days, events, setups)
-- [ ] `regression`: E0 DESIGN identical to Part 1
-- [ ] `study`: 36 primary cells with DESIGN and HOLDOUT side by side, HOLDOUT verdicts, E2 funnel; no cell selected as best
+Step B, 2026-09-30: all gates passed (evidence in `research/btb_v2/`).
+
+- [x] 4 programs compile: 0 errors, 0 warnings
+- [x] `btb_tests.txt`: `RESULT: PASS ... failed=0` (includes the owner-chart E2 test) — passed=455
+- [x] Python tests: OK (68)
+- [x] Raw audit and tester package: `DATA-PASSED` for 2026-01-01..2026-09-25
+- [x] `manifest.json` → `inputs.non_default_inputs` lists only `CodeCommitSHA` and `RoadmapSHA256`
+- [x] `run_reference`: `RECONCILIATION PASS` (days, events, setups)
+- [x] `regression`: E0 DESIGN identical to Part 1 — days and all E0 DESIGN proxy rows identical; one event row per TF differs because of the Part 1 end-of-data cut (roadmap closure 61)
+- [x] `study`: 36 primary cells with DESIGN and HOLDOUT side by side, HOLDOUT verdicts, E2 funnel; no cell selected as best

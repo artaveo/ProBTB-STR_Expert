@@ -1,0 +1,504 @@
+BTB blocking tests — contracts TRE-PHASE1-CONTRACT-2026-09-28, BTB-EVENTS-PROXIES-2026-09-29, BTB-V2-E1-E2-2026-09-30
+
+[JSON / hashing]
+  PASS NumStr strips trailing zeros
+  PASS NumStr integer value
+  PASS NumStr negative zero
+  PASS NumStr 8 digits
+  PASS Escape quote, backslash, newline
+  PASS builder commas and nesting
+  PASS SHA-256('abc')
+  PASS ISO time with ms
+
+[1.1 TimeframeSet]
+  PASS default parses
+  PASS default canonical
+  PASS case-insensitive, whitespace-tolerant
+  PASS canonical order after reorder
+  PASS all five allowed
+  PASS canonical enum order
+  PASS empty middle entry fails
+  PASS trailing empty entry fails
+  PASS duplicate fails (not silently removed)
+  PASS unsupported value fails
+  PASS H4 not allowed
+  PASS empty string fails
+  PASS whitespace-only fails
+  PASS internal whitespace fails
+  PASS LiveTimeframe M5 member
+  PASS LiveTimeframe M1 not member fails
+  PASS research runs every selected timeframe
+  PASS live runs exactly the one LiveTimeframe
+  PASS timeframe seconds
+
+[1.2 Broker time]
+  PASS broker day start
+  PASS seconds of day
+  PASS 2026-01-05 is Monday
+  PASS month key
+  PASS first observation opens a day
+  PASS same day does not reset
+  PASS 00:00:00 resets
+  PASS reset timestamp is first tick at/after 00:00
+  PASS gap day: reset at first observed tick
+
+[1.3 Sessions]
+  PASS HH:MM parses
+  PASS 24:00 allowed for end
+  PASS 24:00 rejected for start
+  PASS H:MM rejected
+  PASS 25:00 rejected
+  PASS minute 60 rejected
+  PASS session start inclusive
+  PASS session end exclusive
+  PASS Saturday closed
+  PASS next start after Mon 21:30 is Tue 01:00
+  PASS next start after Fri 21:30 is Mon 01:00
+  PASS strictly after: equal start excluded
+  PASS zero-length broker interval rejected
+  PASS Mode 1 init
+  PASS Mode 1: 21:29:59 allowed
+  PASS Mode 1: 21:30 blocked
+  PASS Mode 1: 23:00 blocked
+  PASS Mode 1: block continues past midnight
+  PASS Mode 1: next session start allowed
+  PASS Mode 1: Friday block spans weekend
+  PASS Mode 1: Monday open allowed
+  PASS Mode 1: Friday block [21:30, Mon 01:00)
+  PASS Mode 1: same-day later session — 21:45 in block
+  PASS Mode 1: block ends at same-day 22:00 session
+  PASS wrapped interval continues after midnight
+  PASS midnight continuation is not a session start
+  PASS Mode 2 init
+  PASS Mode 2: 16:29:59 outside
+  PASS Mode 2: 16:30 inside
+  PASS Mode 2: 21:29:59 inside
+  PASS Mode 2: 21:30 exclusive end
+  PASS Mode 2: Saturday — no actual session
+  PASS Mode 3 00:00->24:00 valid
+  PASS Mode 3 full day intersects actual session
+  PASS Mode 3 Start=End invalid
+  PASS Mode 3 00:00->00:00 invalid
+  PASS Mode 3 start 24:00 invalid
+  PASS Mode 3 wrap-midnight valid
+  PASS Mode 3 wrap: both sides inside
+  PASS Mode 3 wrap: boundaries
+  PASS Mode 3 wrap: inside window but outside actual session
+  PASS Mode 3 same-day window
+
+[1.5/1.6 Units and quotes]
+  PASS units init
+  PASS 0.35 = 3.5 strategy pips
+  PASS 0.35 = 35 points
+  PASS 3 pips = 0.30
+  PASS zero pip size rejected
+  PASS tick alignment
+  PASS spread = ask - bid
+  PASS open long Ask / short Bid
+  PASS close long Bid / short Ask
+  PASS signal bar source BID
+  PASS usable quote
+  PASS zero spread not usable
+  PASS native long: Bid <= SL
+  PASS mid long: Mid above SL
+  PASS native long: Bid above SL
+  PASS native short: Ask >= SL (equal)
+  PASS native short: Ask below SL
+  PASS mid short: Mid >= SL
+
+[1.7 Costs]
+  PASS defaults valid
+  PASS published XAUUSD example formula (1 lot @ 4466.22)
+  PASS 0.5 lot @ 2000
+  PASS buffer 0 at baseline
+  PASS latency ZERO
+  PASS no slippage: long entry = Ask
+  PASS FIXED 2/5 valid
+  PASS long entry Ask+2pt
+  PASS short entry Bid-2pt
+  PASS long exit Bid-5pt
+  PASS short exit Ask+5pt
+  PASS buffer = max(entry, exit)
+  PASS NONE with non-zero points rejected
+  PASS non-registered slippage 3 rejected
+  PASS FIXED with 0/0 rejected
+  PASS latency ZERO with delay rejected
+  PASS latency 250ms valid
+  PASS latency adds delay
+  PASS latency 300ms rejected
+  PASS broker-schedule contract size requires a value
+  PASS spread exactly 3.0 pips and cost exactly 0.10R pass
+  PASS 3.1 pips rejected
+  PASS 0.10002R cost rejected
+  PASS spread gate disabled
+  PASS zero 1R is invalid input
+
+[1.8 Position sizing]
+  PASS floor 0.999999 -> 0.99
+  PASS exact step kept
+  PASS 0.3/0.1 float edge kept
+  PASS long sizing ok
+  PASS worst loss per lot = 500 path + 3.2 commission
+  PASS volume rounded down (0.9936 -> 0.99)
+  PASS worst-case loss never exceeds 1R
+  PASS short sizing symmetric
+  PASS stressed sizing ok
+  PASS exec entry includes entry slippage
+  PASS worst exit includes buffer
+  PASS stressed volume 0.98
+  PASS stressed worst-case within 1R
+  PASS stop on wrong side rejected
+  PASS below minimum volume rejected (never rounded up)
+  PASS capped at volume max
+  PASS reduced to available margin
+  PASS insufficient margin rejected
+  PASS MID-stop sizing is SPEC-INCOMPLETE
+  PASS stops level distance
+
+[0B.10 AccountRuleEngine]
+  PASS profile loads
+  PASS zero balance rejected
+  PASS daily floor = -5% of initial balance
+  PASS max-loss floor equity = 90%
+  PASS DailyNetResult sums components once
+  PASS 940 above floor with 50 buffer: OK
+  PASS buffer = 0.10R x 500
+  PASS projected distance 40 <= 50: NEAR_BREACH
+  PASS exactly on the floor is near-breach, not breach
+  PASS below daily floor: BREACH
+  PASS equity 40 above max-loss floor: NEAR_BREACH
+  PASS equity below max-loss floor: BREACH
+  PASS breach is latched for the run
+  PASS first reset
+  PASS no intraday reset
+  PASS reset at 00:00 broker time
+
+[0C.9/1.9 Risk admission]
+  PASS defaults valid
+  PASS MaxTotalDrawdown enabled = SPEC-INCOMPLETE
+  PASS MaxConsecutiveLossGuard enabled = SPEC-INCOMPLETE
+  PASS day opens
+  PASS 1R = 0.5% of start-of-day equity
+  PASS daily floor = start - 3R
+  PASS intraday equity does not rebase
+  PASS new day rebases 1R
+  PASS clean book admits 1R
+  PASS aggregate 1R
+  PASS 4th position rejected
+  PASS same-direction 2.2R > 2.0R rejected
+  PASS opposite direction 1.2R admitted
+  PASS aggregate 4.2R > 3.0R rejected
+  PASS projected 98400 < 98500 rejected
+  PASS projected exactly at floor admitted
+  PASS guard OFF skips daily floor
+  PASS open-trade incremental loss counts toward floor
+  PASS +9R reached blocks new entries
+  PASS below +9R admits
+  PASS directional position cap
+  PASS cap counts directions separately
+  PASS external account rule rejects even when internal budget passes
+  PASS zero-risk proposal invalid
+
+[1.4 Data-quality audit]
+  PASS gate is AUDIT-INCOMPLETE before Finalize
+  PASS clean hour: 60 eligible, 0 fallback
+  PASS clean hour: session start after range start is not a gap
+  PASS clean gate DATA-PASSED, nothing quarantined
+  PASS closure declared
+  PASS declared closure minutes are not eligible (60 - 10)
+  PASS fallback = 3 no-tick+bar, 4 no-tick-no-bar, 1 reconciliation failure
+  PASS fallback share
+  PASS mid-session 7-minute gap is a critical gap, not a closure
+  PASS quarantine = 8 PFM minutes + partial gap minute 01:09
+  PASS quarantine lookup
+  PASS quarantine share 18% -> DATA-FAILED
+  PASS gap interval recorded as quarantined
+  PASS reconciliation failure listed
+  PASS session start boundary
+  PASS session end boundary
+  PASS 24:00 end boundary seen at next midnight
+  PASS early close (no ticks, no bars, reaches session end) auto-detected as closure
+  PASS closure minutes excluded from eligible (1320 - 40)
+  PASS mid-session no-bar hole stays a critical gap
+  PASS PFM = 8 no-bar + 2 bar-without-ticks
+  PASS quarantine = 10 PFM + partial gap minute
+  PASS both holes quarantined
+  PASS closure is not quarantine
+  PASS quarantine share 0.86% <= 1% -> DATA-PASSED
+  PASS closure interval recorded
+  PASS bars without ticks at session end is a gap, not a closure
+  PASS 40 fallback minutes -> DATA-FAILED
+  PASS quarantine CSV loads (2 windows)
+  PASS loaded quarantine lookup
+  PASS daily break excluded (60s + 180s)
+  PASS weekend excluded
+  PASS continuous in-session interval
+  PASS 5 records, 3 usable
+  PASS duplicate timestamp + exact duplicate
+  PASS non-monotonic timestamp
+  PASS invalid price and zero spread
+  PASS closure CSV loads
+  PASS closure end exclusive
+
+[0A.6 Manifest helpers]
+  PASS experiment id valid
+  PASS unsafe experiment ids rejected
+  PASS non-default input detected
+  PASS run card marks non-default
+  PASS written file hash matches content hash
+
+[TRE Bars / ATR (LSR 2.10A)]
+  PASS 10 M1 bars -> 2 M5 bars
+  PASS M5 OHLC aggregation
+  PASS second M5 bar time
+  PASS ATR not ready before n bars
+  PASS Wilder ATR recursion
+
+[BTB types, ids and buckets]
+  PASS event id = sha256('BTB|M5|L1|LONG|2026-01-06T00:00:00|2026-01-07T10:00:00')[:16]
+  PASS median of an even count = mean of the two middle values
+  PASS median of one sample
+  PASS median does not reorder the caller's samples
+  PASS level and side names
+  PASS abnormal day name
+  PASS open-beyond status name
+  PASS fill state names
+  PASS spread buckets <3, 3-5, 5-8, >=8 pips
+  PASS box_n buckets
+  PASS hour buckets
+  PASS SL and TP on one tick -> SL
+  PASS gap tick with both barriers -> GAP_SL
+  PASS TP before the session close
+  PASS SL before the session close
+  PASS 21:30 close
+  PASS 21:30 close after a gap
+  PASS no exit
+
+[BTB 3 Windows and the spread-normal resume rule]
+  PASS first trading day is a warm-up day
+  PASS warm-up day has no window
+  PASS reference = median of the 690 samples in [10:00, 21:30)
+  PASS NextTradableSessionStart = 01:15
+  PASS resume = close of the 5th normal bar (02:05)
+  PASS 30 <= 1.5 x 20 qualifies; 31 resets the run
+  PASS not met by 16:30 -> ABNORMAL_SPREAD_DAY, resume 16:30
+  PASS abnormal day: 16:25 outside
+  PASS abnormal day: 16:30 inside FULL and NY
+  PASS resume exactly at 16:30 is NORMAL
+  PASS resume 01:20 on a normal morning
+  PASS 01:15 before resume: outside
+  PASS 01:20: FULL only
+  PASS 16:29: FULL only
+  PASS 16:30: FULL and NY
+  PASS 21:29: FULL and NY
+  PASS 21:30: late-spread block
+  PASS reference skips a day without samples in [10:00, 21:30)
+  PASS Saturday bars: NO_SESSION_START
+  PASS days.csv row format (warm-up)
+  PASS days.csv row format (normal)
+
+[BTB 4 Levels and breakout events]
+  PASS PDH breaks once; the later re-break is consumed
+  PASS PDH 2000.05 broken by the 10:00 candle (open <= level, close > level)
+  PASS 10:05 close: FULL, not NY
+  PASS L1 source time = previous trading day
+  PASS PDL 1999.95 broken down at 10:05
+  PASS first bar opens above PDH: OPEN_BEYOND_LEVEL once
+  PASS open == level, close > level: EVENT
+  PASS wick above, close == level: no breakout
+  PASS Asian high 2003.00 from [01:20, 08:00); the 01:15 bar is before resume
+  PASS Asian range not usable before 08:00
+  PASS one swing high 2005 at the 04:00 H1 bar
+  PASS usable from the close of the second right bar
+  PASS life ends at the close of H1 bar confirm+120
+  PASS flat bars inside the box: no L4 row
+  PASS box top broken at 10:00
+  PASS longest box N = 96, top 2000.05, source = first box bar
+  PASS other side is not in cooldown: bottom 1999.95 broken at 10:05
+  PASS the 10:10 crossing of the new top 2000.12 is inside the 20-bar long cooldown
+  PASS steady trend: no box (range > 2.5 ATR)
+  PASS breakout on the warm-up day: WARMUP, no window
+  PASS events.csv row: id, tf, level, side, price, source, box_n, times, OHLC
+  PASS events.csv row: in_full, in_ny, status
+
+[BTB 7 Tick path equals the M1 path]
+  PASS fixture produces breakout events
+  PASS same number of event rows
+  PASS every events.csv row identical
+  PASS every days.csv row identical
+  PASS every btb_setups_E2 row identical (one setup per EVENT)
+  PASS three proxies per EVENT inside FULL
+  PASS no proxy left pending or open after Finish
+
+[BTB 5 Limit-order proxies]
+  PASS three proxies wait for the first tick at/after the close
+  PASS placed on the first tick at/after the breakout close
+  PASS Buy Limit at the breakout close 2000.50, pending (Ask 2000.90)
+  PASS s0 = Ask - Bid at placement
+  PASS long SL = breakout low - s0
+  PASS PlannedRisk1R = loss(P -> SL) + commission
+  PASS TP1 solved for net 1R, aligned outward
+  PASS TP2 solved for net 2R
+  PASS TP3 solved for net 3R
+  PASS TP1: net at TP >= 1R and one tick inward < 1R (never reduced)
+  PASS TP2: net at TP >= 2R and one tick inward < 2R (never reduced)
+  PASS TP3: net at TP >= 3R and one tick inward < 3R (never reduced)
+  PASS Ask = P + 1 point: no fill
+  PASS Ask = P: filled
+  PASS FILLED (not at placement); all three R filled together
+  PASS MAE measured from the fill tick (Bid)
+  PASS R1 exits at TP, at the TP price
+  PASS realized net result at TP is at least 1R (full reward)
+  PASS R2 and R3 still open
+  PASS 21:30: open long closed at Bid (SESSION_CLOSE)
+  PASS every proxy closed at 21:30
+  PASS SESSION_CLOSE net R
+  PASS Sell Limit with Bid >= P at placement: FILLED_AT_PLACEMENT
+  PASS state text while open
+  PASS short SL = breakout high + s0 (0.20)
+  PASS short TP1 aligned outward (down)
+  PASS Ask below SL: still open (never stopped by the entry spread)
+  PASS Ask >= SL: stopped at the Ask
+  PASS stop at SL = -1R net
+  PASS ledger state
+  PASS short PlannedRisk1R
+  PASS Bid >= TP1 before the fill: R1 MISSED_TP_FIRST
+  PASS TP2 not reached: R2 still pending
+  PASS 21:29:59 still pending
+  PASS 21:30: pending limit cancelled, never filled
+  PASS still pending just before 12 signal bars
+  PASS 12 M5 bars after the close: EXPIRED_12_BARS (expiry checked before the fill)
+  PASS Buy Limit with Ask <= P at placement: FILLED_AT_PLACEMENT
+  PASS Bid <= SL after a > 300 s tick gap: GAP_SL
+  PASS open at the end of data: END_OF_DATA at the last Bid
+  PASS SL closer than SYMBOL_TRADE_STOPS_LEVEL: INVALID_STOP_GEOMETRY
+  PASS event after the last tick: NOT_PLACED_END_OF_DATA
+  PASS event outside the FULL window: ledgered, no proxy
+
+[BTB ledgers, quarantine and run package]
+  PASS run package folder Common\Files\BTB\<ExperimentId>\
+  PASS Write returns the SHA-256 of the UTF-8 bytes
+  PASS BTB_WriteLine writes UTF-8 + LF; RegisterFile hashes from disk
+  PASS manifest file index
+  PASS no write failures
+  PASS exit reason names
+  PASS day statuses counted
+  PASS btb_days.csv written
+  PASS btb_days.csv bytes = header + rows, LF
+  PASS breakout candle overlapping the quarantine: IN_QUARANTINE
+  PASS quarantine starting at the candle close: EVENT (end exclusive)
+  PASS btb_events_<TF>.csv written
+  PASS btb_events_<TF>.csv bytes = header + rows, LF
+  PASS proxies.csv: the 36 Part 1 columns unchanged, then mode, dep_d, sample, arm_time, n_legs, n_pushes (BTB-4)
+  PASS proxies.csv row: order, fill, exit and result columns
+  PASS proxies.csv row: ambiguous, close hour, hour bucket, spread bucket (0.30 = 3.0 pips)
+  PASS s0 in pips from whole points
+  PASS quarantine inside the proxy's life: IN_QUARANTINE
+  PASS quarantine after the exit: FILLED
+  PASS open proxy row before Finish
+  PASS H1 bars counted
+  PASS alive before the close of H1 bar 124
+  PASS expired at the close of H1 bar 124 (confirm 4 + 120)
+
+[BTB-4 V3.1 ZigZag and fractals]
+  PASS pivots: first = bar 0 low; tie keeps the first bar; boundary included; a new-extreme bar is never its own reversal
+  PASS first pivot HIGH at bar 0; no reversal while ATR14 is not ready
+  PASS down-swing continues with the new low
+  PASS Z = 1.0 x ATR14 of the detecting bar
+  PASS 2/2 fractal high at bar 2, confirmed at bar 4
+  PASS 2/2 fractal low at bar 3, confirmed at bar 5
+
+[BTB-4 V3.4 Trend line and live-bar gating]
+  PASS y at p2
+  PASS y three bars after p2
+  PASS y at p1
+  PASS long: |y - P| = +tol is live (boundary included)
+  PASS long: |y - P| = -tol is live (boundary included)
+  PASS long: above P + tol waits
+  PASS long: below P - tol has passed the zone
+  PASS short: +tol live
+  PASS short: below P - tol waits
+  PASS short: above P + tol has passed the zone
+
+[BTB-4 V3 E2 setups: the owner's chart and every terminal status]
+  PASS owner's chart (long): LIVE_TO_FILL
+  PASS owner's chart (long): n_legs = 3, n_pushes = 2 before the fill
+  PASS owner's chart (long): L0 H1 L1 H2 L2 H3 at bars 18 22 23 26 27 30 (leg 1 contains the breakout, bar 19)
+  PASS owner's chart (long): spike 31, push 1 at 31, push 2 at 37
+  PASS owner's chart (long): live bars 40-41, P reached at 41
+  PASS P = breakout close, zone = breakout bar
+  PASS setups ledger row equals the Python reference
+  PASS owner's chart (short): LIVE_TO_FILL
+  PASS owner's chart (short): n_legs = 3, n_pushes = 2 before the fill
+  PASS owner's chart (short): L0 H1 L1 H2 L2 H3 at bars 18 22 23 26 27 30 (leg 1 contains the breakout, bar 19)
+  PASS owner's chart (short): spike 31, push 1 at 31, push 2 at 37
+  PASS owner's chart (short): live bars 40-41, P reached at 41
+  PASS short mirror: P, zone and pushes mirrored
+  PASS STRUCTURE_FAILED: a low touches the zone during the legs (long)
+  PASS STRUCTURE_FAILED: a low touches the zone during the legs (short)
+  PASS NO_SPIKE: normal pullback, then a lower high (long)
+  PASS NO_SPIKE: normal pullback, then a lower high (short)
+  PASS LINE_PASSED: live bars without reaching P (long)
+  PASS LINE_PASSED: live bars without reaching P (short)
+  PASS EXPIRED_3_DAYS on the 4th broker date (long)
+  PASS EXPIRED_3_DAYS on the 4th broker date (short)
+  PASS INVALIDATED_BEFORE_FILL: crash through the zone off the line (long)
+  PASS INVALIDATED_BEFORE_FILL: crash through the zone off the line (short)
+  PASS NO_LEG1: breakout inside a down-swing (long)
+  PASS NO_LEG1: breakout inside a down-swing (short)
+  PASS END_OF_DATA with one push
+  PASS live bars need the FULL window
+  PASS sample split at 2026-07-01
+  PASS E2 proxy end-state names
+  PASS mode names
+
+[BTB-4 V2 E1: departure, then return (tick level)]
+  PASS E1_DepD list parses
+  PASS E1_DepD: values > 0, at most 3
+  PASS reference stop = breakout low - s0
+  PASS arm price P + 1.0 x |P - SL_ref|
+  PASS arm price D = 1.5
+  PASS arm price D = 2.0
+  PASS short arm price P - Dep
+  PASS E0 3 + E1 9 (3 D x 3 R) proxies per event in FULL
+  PASS SL_ref from the reference tick's spread
+  PASS arm price D = 1.0
+  PASS no order before arming
+  PASS Bid = P + Dep - 1 point: not armed
+  PASS Bid = P + Dep: armed; the arming tick is the placement tick
+  PASS s0 = spread at the arming tick
+  PASS SL recomputed from the arming spread
+  PASS limit P unchanged
+  PASS D = 1.5 / 2.0 not yet armed
+  PASS filled 18 bars after the breakout: no 12-bar expiry for E1
+  PASS Bid <= SL_ref before arming: INVALIDATED_BEFORE_ARM
+  PASS armed and filled proxy stopped normally
+  PASS ledger state text
+  PASS armed, Bid <= SL with Ask > P: INVALIDATED_BEFORE_FILL
+  PASS armed before 21:30
+  PASS 21:30: armed limit cancelled
+  PASS 21:30: unarmed setup ends
+  PASS short SL_ref = breakout high + s0
+  PASS short arm price
+  PASS short: Bid 1 point above P - Dep: not armed
+  PASS short: Bid = P - Dep: armed
+  PASS short: Bid = P fills the Sell Limit
+  PASS short: Ask >= SL stops
+
+[BTB-4 V3.4-3.5 E2 order on ticks]
+  PASS three E2 proxies per setup, waiting
+  PASS Ask <= P before the trend line exists: not live, no fill
+  PASS placed on the first live tick (bar 40)
+  PASS SL = breakout low - s0 of the first live tick
+  PASS TP1 solved for net 1R
+  PASS third push: Ask = P on the live bar 41 fills at P (n_legs 3, n_pushes 2)
+  PASS window decided by the fill time (05:25: FULL, not NY)
+  PASS setup ends LIVE_TO_FILL at bar 41
+  PASS R1 exits at TP with at least 1R net
+  PASS setup ended at the touch without a fill
+  PASS ledger state for a touch without a fill
+  PASS short: placed on the first live tick
+  PASS short SL = breakout high + s0
+  PASS short: Bid = P fills the Sell Limit on the live bar
+
+RESULT: PASS  passed=455 failed=0  build=6182

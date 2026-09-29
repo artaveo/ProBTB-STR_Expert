@@ -256,6 +256,19 @@ class TestStudyV2(unittest.TestCase):
         p36 = dict(p, **{f"e0_{i}": 0.5 for i in range(12)})
         self.assertFalse(study.holm_bonferroni(p36)["x"])
 
+    def test_funnel_counts_armed_inside_the_window(self):
+        full_only = {"arm_time": "2026-07-02T10:00:00", "placement_time": "2026-07-02T10:00:00", "state": "FILLED"}
+        in_ny = dict(full_only)
+        unarmed = {"arm_time": "", "placement_time": "", "state": "NOT_ARMED_WINDOW_END"}
+        # NY cell: px_all holds every row of the mode, px only the NY rows
+        for mode in ("E0", "E1"):
+            f = study.funnel(mode, [1, 2], [full_only, in_ny, unarmed], [in_ny, unarmed])
+            self.assertEqual((f["events"], f["armed_or_live"], f["filled"]), (2, 1, 1))
+        # E2: an unfilled row has no window, so live rows are counted over all windows
+        live_unfilled = {"arm_time": "2026-07-02T10:00:00", "state": "LINE_PASSED"}
+        f = study.funnel("E2", [1], [live_unfilled], [])
+        self.assertEqual((f["armed_or_live"], f["filled"]), (1, 0))
+
     def test_main_writes_v2_report(self):
         tmp = tempfile.mkdtemp(prefix="btb_v2_")
         try:
@@ -276,6 +289,8 @@ class TestStudyV2(unittest.TestCase):
             self.assertIn("E1|D1.5|M5|FULL|R1", rep["diagnostics"]["e1_dep"])
             with open(os.path.join(tmp, "python_reference", "report.md"), encoding="utf-8") as f:
                 md = f.read()
-            self.assertEqual(sum(1 for line in md.splitlines() if line[:5] in ("| E0 ", "| E1 ", "| E2 ")), 36)
+            # 36 rows in the primary table + 36 rows in the exits-and-risk table
+            self.assertEqual(sum(1 for line in md.splitlines() if line[:5] in ("| E0 ", "| E1 ", "| E2 ")), 72)
+            self.assertIn("## Exits and risk per primary cell (DESIGN | HOLDOUT)", md)
         finally:
             shutil.rmtree(tmp, ignore_errors=True)

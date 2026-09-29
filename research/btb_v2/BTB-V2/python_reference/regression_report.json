@@ -1,0 +1,63 @@
+{
+  "v2_package": "C:\\Users\\zakir_ip1m5wj\\AppData\\Roaming\\MetaQuotes\\Terminal\\Common\\Files\\BTB\\BTB-V2",
+  "part1_package": "E:\\Trade\\ProBTB-STR_Expert\\research\\btb_run\\BTB-RUN",
+  "files": {
+    "btb_days.csv": {
+      "mql5_rows": 127,
+      "python_rows": 127,
+      "identical": true,
+      "first_mismatches": []
+    },
+    "btb_events_M5.csv": {
+      "mql5_rows": 805,
+      "python_rows": 805,
+      "identical": false,
+      "first_mismatches": [
+        {
+          "line": 806,
+          "mql5_missing": false,
+          "python_missing": false,
+          "columns": [
+            {
+              "column": "break_close",
+              "mql5": "4007.58",
+              "python": "4007.59"
+            }
+          ]
+        }
+      ]
+    },
+    "btb_proxies_M5.csv (E0, DESIGN, first 36 columns)": {
+      "mql5_rows": 2037,
+      "python_rows": 2037,
+      "identical": true,
+      "first_mismatches": []
+    },
+    "btb_events_M15.csv": {
+      "mql5_rows": 691,
+      "python_rows": 691,
+      "identical": false,
+      "first_mismatches": [
+        {
+          "line": 692,
+          "mql5_missing": false,
+          "python_missing": false,
+          "columns": [
+            {
+              "column": "break_close",
+              "mql5": "4007.58",
+              "python": "4007.59"
+            }
+          ]
+        }
+      ]
+    },
+    "btb_proxies_M15.csv (E0, DESIGN, first 36 columns)": {
+      "mql5_rows": 1725,
+      "python_rows": 1725,
+      "identical": true,
+      "first_mismatches": []
+    }
+  },
+  "result": "FAIL"
+}

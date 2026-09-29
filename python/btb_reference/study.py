@@ -317,8 +317,11 @@ def v2_rows(events: List[dict], setups: List[dict], proxies: List[dict], mode: s
 
 
 def funnel(mode: str, ev: List[dict], px_all: List[dict], px: List[dict]) -> dict:
+    # E0/E1 rows carry the window of the breakout close, so armed orders are counted inside the cell's window;
+    # an unfilled E2 row has no window (closure 54), so E2 counts its live rows over all windows.
     armed_col = "placement_time" if mode == "E0" else "arm_time"
-    return {"events": len(ev), "armed_or_live": sum(1 for p in px_all if p[armed_col] not in ("", "NA")),
+    armed_rows = px_all if mode == "E2" else px
+    return {"events": len(ev), "armed_or_live": sum(1 for p in armed_rows if p[armed_col] not in ("", "NA")),
             "filled": sum(1 for p in px if p["state"] in FILLED_STATES)}
 
 
@@ -474,6 +477,23 @@ def markdown_v2(rep: dict) -> str:
             f"{fh['events']} → {fh['armed_or_live']} → {h['analysed']} | {h['independent_days']} | {fmt(h['mean_net_r'])} | "
             f"{fmt(h['win_rate'])} | {fmt(h['p_value'], 4)} | {'—' if hs is None else ('yes' if hs else 'no')} | "
             f"{c['holdout_verdict']} | {a['analysed']} / {fmt(a['mean_net_r'])} |")
+    lines += ["", "## Exits and risk per primary cell (DESIGN | HOLDOUT)", "",
+              "Fills = TP + SL + 21:30 close + gap exits. Max DD R = largest peak-to-trough fall of the cumulative net R "
+              "in exit order; Max L = most consecutive losing trades. Descriptive only (closure 34).", "",
+              "| Mode | TF | Window | R | D fills | D TP | D SL | D 21:30 | D win | D total R | D Max DD R | D Max L | "
+              "H fills | H TP | H SL | H 21:30 | H win | H total R | H Max DD R | H Max L |",
+              "|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|"]
+
+    def exits(s):
+        ex = s["exit_reasons"]
+        closes = ex.get("SESSION_CLOSE", 0) + ex.get("GAP_SESSION_CLOSE", 0)
+        return (f"{s['analysed']} | {ex.get('TP', 0) + ex.get('GAP_TP', 0)} | {ex.get('SL', 0) + ex.get('GAP_SL', 0)} | "
+                f"{closes} | {fmt(s['win_rate'])} | {fmt(s['total_net_r'], 2)} | {fmt(s['max_drawdown_r'], 2)} | "
+                f"{s['max_losing_streak']}")
+
+    for c in rep["primary"].values():
+        lines.append(f"| {c['mode']} | {c['tf']} | {c['window']} | {c['r']} | {exits(c['samples']['DESIGN'])} | "
+                     f"{exits(c['samples']['HOLDOUT'])} |")
     lines += ["", "## E2 funnel (setups → three legs → spike → trend line → live → LIVE_TO_FILL → filled, R = 1)", "",
               "| TF | Sample | Setups | ≥3 legs | Spike | Line | Live | Live to fill | Filled | Statuses |",
               "|---|---|---|---|---|---|---|---|---|---|"]
