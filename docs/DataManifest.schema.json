@@ -1,0 +1,169 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "tre.datamanifest.v1",
+  "title": "Liquidity Sweep Reversal — DataManifest (roadmap 0A.6)",
+  "description": "Written last by TRE_Expert.mq5 to Common/Files/TRE/<experiment_id>/manifest.json. Every other file of the run package is listed in `files` with its SHA-256.",
+  "type": "object",
+  "required": [
+    "schema_version", "engine", "phase", "contract_id", "experiment_id", "run_context",
+    "init_broker_time", "finalized_broker_time", "code", "platform", "broker",
+    "server_time_basis", "symbol", "timeframes", "range", "tick_source", "account_rules",
+    "execution_model", "scenario_ids", "declared_trial_count", "random_seeds",
+    "ledger_checksum", "per_timeframe_state", "inputs", "files"
+  ],
+  "properties": {
+    "schema_version": { "const": "tre.datamanifest.v1" },
+    "engine": { "const": "TickResearchEngine" },
+    "phase": { "type": "string" },
+    "contract_id": { "type": "string" },
+    "experiment_id": { "type": "string", "pattern": "^[A-Za-z0-9._-]{1,64}$" },
+    "run_context": { "enum": ["RESEARCH_TESTER", "LIVE"] },
+    "init_broker_time": { "$ref": "#/$defs/brokerTime" },
+    "finalized_broker_time": { "$ref": "#/$defs/brokerTime" },
+    "deinit_reason": { "type": "integer" },
+    "code": {
+      "type": "object",
+      "required": ["code_sha", "roadmap_file", "roadmap_sha256"],
+      "properties": {
+        "code_sha": { "type": "string", "description": "git commit SHA declared in the Run Card (empty = not declared)" },
+        "roadmap_file": { "const": "Liquidity_Sweep_Reversal_Roadmap.md" },
+        "roadmap_sha256": { "type": "string" }
+      }
+    },
+    "platform": {
+      "type": "object",
+      "required": ["mt5_build", "strategy_tester", "declared_tester_model"],
+      "properties": {
+        "mt5_build": { "type": "integer" },
+        "terminal_company": { "type": "string" },
+        "strategy_tester": { "type": "boolean" },
+        "declared_tester_model": { "type": "string" }
+      }
+    },
+    "broker": {
+      "type": "object",
+      "required": ["company", "server", "account_currency"],
+      "properties": {
+        "company": { "type": "string" },
+        "server": { "type": "string" },
+        "account_currency": { "type": "string" }
+      }
+    },
+    "server_time_basis": { "const": "BROKER_SERVER_TIME" },
+    "symbol": { "type": "string" },
+    "timeframes": {
+      "type": "object",
+      "required": ["timeframe_set", "live_timeframe", "active_timeframes"],
+      "properties": {
+        "timeframe_set": { "$ref": "#/$defs/timeframeList" },
+        "live_timeframe": { "enum": ["M1", "M5", "M15", "M30", "H1"] },
+        "active_timeframes": { "$ref": "#/$defs/timeframeList" },
+        "isolation": { "type": "string" }
+      }
+    },
+    "range": {
+      "type": "object",
+      "required": ["requested_start", "requested_end_exclusive", "actual_first_tick", "actual_last_tick"],
+      "properties": {
+        "requested_start": { "$ref": "#/$defs/brokerTime" },
+        "requested_end_exclusive": { "$ref": "#/$defs/brokerTime" },
+        "actual_first_tick": { "type": "string" },
+        "actual_last_tick": { "type": "string" }
+      }
+    },
+    "tick_source": {
+      "type": "object",
+      "required": ["execution_stream"],
+      "properties": {
+        "execution_stream": { "type": "string" },
+        "raw_audit_source": { "type": "string" },
+        "potential_fallback_minute_share": { "type": ["number", "null"] },
+        "critical_data_gap_count": { "type": "integer" },
+        "data_gate": { "enum": ["DATA-PASSED", "DATA-FAILED", "AUDIT-INCOMPLETE"] }
+      }
+    },
+    "account_rules": {
+      "type": "object",
+      "required": ["profile", "initial_balance", "currency"],
+      "properties": {
+        "profile": { "const": "FUNDEDNEXT_STELLAR_2STEP" },
+        "initial_balance": { "type": "number", "exclusiveMinimum": 0 },
+        "currency": { "type": "string" }
+      }
+    },
+    "execution_model": {
+      "type": "object",
+      "required": ["stop_execution_profile", "commission", "slippage", "latency"],
+      "properties": {
+        "stop_execution_profile": { "enum": ["LIVE_NATIVE_STOP", "RESEARCH_MID_STOP"] },
+        "commission": { "type": "string" },
+        "slippage": { "type": "string" },
+        "latency": { "type": "string" }
+      }
+    },
+    "scenario_ids": { "type": "array", "items": { "type": "string" }, "minItems": 1 },
+    "declared_trial_count": { "type": "integer", "minimum": 1 },
+    "random_seeds": { "type": "array", "items": { "type": "integer" } },
+    "ledger_checksum": { "type": ["string", "null"], "description": "null in Phase 1 (no event/trade ledger yet)" },
+    "ledger_note": { "type": "string" },
+    "per_timeframe_state": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["timeframe", "ticks", "broker_day_resets", "equity", "account_rule_state"],
+        "properties": {
+          "timeframe": { "enum": ["M1", "M5", "M15", "M30", "H1"] },
+          "ticks": { "type": "integer" },
+          "ticks_in_entry_window": { "type": "integer" },
+          "broker_day_resets": { "type": "integer" },
+          "equity": { "type": "number" },
+          "account_rule_state": { "enum": ["OK", "NEAR_BREACH", "BREACH"] },
+          "account_rule_engine": { "type": "object" }
+        }
+      }
+    },
+    "inputs": {
+      "type": "object",
+      "required": ["inputs", "non_default_inputs"],
+      "properties": {
+        "inputs": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["name", "value", "roadmap_default", "is_default"],
+            "properties": {
+              "name": { "type": "string" },
+              "value": { "type": "string" },
+              "roadmap_default": { "type": "string" },
+              "is_default": { "type": "boolean" }
+            }
+          }
+        },
+        "non_default_inputs": { "type": "array", "items": { "type": "string" } }
+      }
+    },
+    "files": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["file", "sha256"],
+        "properties": {
+          "file": { "type": "string" },
+          "sha256": { "type": "string", "pattern": "^[0-9a-f]{64}$" }
+        }
+      }
+    }
+  },
+  "$defs": {
+    "brokerTime": {
+      "type": "string",
+      "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}$",
+      "description": "Broker Server Time, no zone suffix"
+    },
+    "timeframeList": {
+      "type": "string",
+      "pattern": "^(M1|M5|M15|M30|H1)(,(M1|M5|M15|M30|H1))*$",
+      "description": "Canonical order M1,M5,M15,M30,H1"
+    }
+  }
+}

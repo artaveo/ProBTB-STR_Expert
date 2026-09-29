@@ -1,2 +1,6 @@
 # Auto detect text files and perform LF normalization
 * text=auto
+# Research packets and MT5 startup/parameter files are kept byte-exact
+research/** -text
+*.ini -text
+*.set -text

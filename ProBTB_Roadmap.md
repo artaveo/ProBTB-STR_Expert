@@ -314,6 +314,40 @@ Compile/Tests: ...
 Result: ...
 ```
 
+```
+BTB-1..3 — CODE COMPLETE (not compiled)
+Date: 2026-09-29
+Step: A (Claude Code cloud session; no MetaTrader)
+Files changed:
+  MQL5/Include/TickResearchEngine/TRE_*.mqh (15), MQL5/Scripts/TickResearchEngine/TRE_RawTickAudit.mq5,
+  docs/DataManifest.schema.json  — ported from LSR a6ad185, rename only
+  MQL5/Include/ProBTB/BTB_Types.mqh, BTB_Window.mqh, BTB_Levels.mqh, BTB_Proxy.mqh, BTB_Engine.mqh
+  MQL5/Experts/ProBTB/BTB_Expert.mq5, MQL5/Scripts/ProBTB/BTB_Tests.mq5, MQL5/Scripts/ProBTB/BTB_EventReplay.mq5
+  MQL5/Profiles/Tester/BTB_RUN.set, MQL5/Presets/TRE_RawTickAudit_BTB.set
+  config/btb_tests.ini, config/btb_tester.ini, config/btb_raw_audit.ini
+  python/tre_reference/{__init__,stats}.py, python/btb_reference/{__init__,levels,run_reference,study}.py
+  python/tests/test_tre_stats.py, test_btb_levels.py, test_btb_study.py
+  tools/tre_port.py, docs/BTB_RunCard.md, research/btb_run/README.md, .gitattributes, .gitignore
+Summary:
+  BTB-1: engine ported by the mechanical rename (1.1-1.3); LSR Phase 1 test suites and the TRE bar/ATR
+    suite ported into BTB_Tests.mq5; day_block_bootstrap_upper ported verbatim with its tests.
+  BTB-2: late-spread block, spread-normal resume rule and FULL/NY windows (Section 3); L1-L4 levels,
+    breakout / open-beyond / consumption / cooldown rules, event ledgers (Section 4) in MQL5 and in the
+    independent Python reference (levels.py, run_reference.py; byte-for-byte reconciliation).
+  BTB-3: tick-level Buy/Sell Limit proxies for R = 1, 2, 3 (Section 5) and the 48-cell study with the
+    day-block bootstrap, bootstrap p-values, Holm-Bonferroni and the pre-registered classification (Section 6).
+Compile/Tests:
+  MQL5: NOT compiled, NOT run (Step B). BTB_Tests.mq5 holds the ported TRE suites plus the BTB suites
+    (types/ids/buckets, windows and resume rule, levels and events, tick path == M1 path, proxies,
+    ledgers/quarantine/run package).
+  Rename verification (1.4): tools/tre_port.py verify against a6ad185 -> RENAME VERIFICATION: PASS,
+    18 files (17 ported files + the Python bootstrap function), 0 differences (empty diff).
+  Python: python -m unittest discover -s tests -> Ran 36 tests, OK (includes the synthetic M1 package
+    run end to end through run_reference, and the tick-path equivalence of the event ledgers).
+Result: CODE COMPLETE. Step B must install, compile (0 errors / 0 warnings), run BTB_Tests, the raw audit
+  and the single tester pass, reconcile and report. Check the Section 11 "Step B: check first" items first.
+```
+
 ## 10. Operator notes (owner's machine, verified 2026-09-29)
 
 | Item | Value |
@@ -329,7 +363,58 @@ Result: ...
 
 ## 11. Closures (decisions taken during implementation)
 
-(empty — append numbered items here)
+Step A, 2026-09-29. Each item is conservative or follows the LSR engine where the roadmap is silent.
+
+**Engine port (BTB-1)**
+
+1. The rename is token-based (`tools/tre_port.py`): `LSR_Phase1`→`TRE_Engine`, `LiquiditySweepReversal`→`TickResearchEngine`, `CLSR_`→`CTRE_`, the whole token `LSR` (in `LSR_`, `ENUM_LSR_`, `LSR-`, `LSR\\`) → `TRE`, and the lowercase token `lsr` → `tre` (manifest schema id `tre.datamanifest.v1`). Free text that no rule covers is unchanged: comments and `#property copyright` still say "Liquidity Sweep Reversal", and `TRE_ROADMAP_FILENAME` is still `Liquidity_Sweep_Reversal_Roadmap.md` (it is the engine's specification). The BTB manifest writes `roadmap_file = ProBTB_Roadmap.md` itself.
+2. `TRE_Engine.mqh` is the renamed `LSR_Phase1.mqh`, so it does not include `TRE_Bars.mqh` (adding it would break the empty-diff rule). `BTB_Engine.mqh` includes `TRE_Engine.mqh` + `TRE_Bars.mqh` + the BTB files.
+3. `CTRE_RunOutput` writes to `Common\Files\TRE\` (rename only). The BTB run package goes to `Common\Files\BTB\<ExperimentId>\` through `CBTB_RunOutput` (same contract, root `BTB`). `TRE_RawTickAudit` still writes to `Common\Files\TRE\<ExperimentId>\`.
+4. Ported tests: the LSR Phase 1 suites (JSON … Manifest) verbatim after renaming, and the LSR 2.10A bar/ATR suite without its `LSR_StableId` check (that function lives in `LSR_Liquidity`, which is not ported; `BTB_EventId` is tested instead). The LSR Phase 2/3 suites are strategy-specific and are not ported.
+5. `day_block_bootstrap_upper` is ported verbatim (the verify tool compares its source text). New helpers in `stats.py` reproduce its draw sequence exactly (tested), so a cell's upper bound and p-value come from the same 10,000 resamples. p-value = share of resample means ≤ 0. The bootstrap day is the broker date of the fill.
+
+**Windows (Section 3)**
+
+6. `NextTradableSessionStart(d)` = `CTRE_SessionSchedule::NextSessionStartAfter(21:30 of date d−1)`. If that start is not on date d, the day is `NO_SESSION_START` (no window).
+7. "Previous trading day" of the reference = the most recent earlier broker date that has at least one M1 spread sample in `[10:00, 21:30)`. Without one the day is `WARMUP` (the first data day).
+8. The 5 consecutive M1 bars are the 5 most recent existing M1 bars at/after the session start (a minute without ticks has no bar). Samples are integer points (Ask − Bid of the last usable tick of the minute, rounded to points); the comparison `sample ≤ 1.5 × median` is exact in binary.
+9. The qualifying bar's close must be ≤ 16:30; otherwise the day is `ABNORMAL_SPREAD_DAY` with ResumeTime 16:30, even if the spread normalises a few minutes later. A day whose data ends undecided is also `ABNORMAL_SPREAD_DAY`.
+10. A breakout candle belongs to the broker day of its open time d; with close time c it is in FULL when `c ≥ ResumeTime(d)`, `c < d + 21:30` and `IsInSession(c)`, and in NY when also `c ≥ d + 16:30`.
+
+**Levels and events (Section 4)**
+
+11. A level is eligible for signal bars whose open time is at or after the level's completion time (PDH/PDL: 00:00 of the day; Asian range: 08:00; H1 swing: close of the second right H1 bar). Validity ends: L1 at the end of the broker day, L2 for bars opening at/after 21:30, L3 at the close time of the 120th H1 bar after the confirming bar (existing H1 bars; hours without data do not count).
+12. L1 source = all M1 bars of the previous broker date with data. The first data date is never a source (LSR rule: it may be partial). L1 levels therefore start on the third data date.
+13. L2 uses M1 bars with open time in `[ResumeTime, 08:00)` on `NORMAL` days only (abnormal days resume at 16:30; warm-up days have no resume). `level_source_time` of L2 = ResumeTime.
+14. Crossing and consumption: the first eligible bar that opens or closes beyond an active level consumes it. It is `EVENT` if the bar opened at/inside the level, `OPEN_BEYOND_LEVEL` if it opened beyond. A wick alone (close not beyond) does not consume. When one candle crosses several levels of one type and side there is one row: the farthest breakout level (highest for long, lowest for short), or, if all were opened beyond, the farthest of those. All crossed levels are consumed.
+15. L4: the box uses ATR(14) of bar k−1 (before bar k updates it) and is re-derived every bar. The cooldown starts only after a breakout row (`EVENT` or `WARMUP`) and blocks every L4 row on that side for 20 bars; `OPEN_BEYOND_LEVEL` does not start it. The ledger's `atr14` is the same pre-bar ATR for every level type.
+16. Status precedence: `OPEN_BEYOND_LEVEL` > `WARMUP` > `IN_QUARANTINE` > `EVENT`. `IN_QUARANTINE` is applied when the ledger is written, if the breakout candle `[open, close)` overlaps a quarantine window (LSR rule), so the in-memory event and the Python reference agree.
+17. `event_id` = first 16 hex characters of SHA-256(`BTB|tf|level|side|level_source_time|break_bar_time`) (the LSR stable-id length). Row order: bar order, then L1, L2, L3, L4, then LONG before SHORT.
+18. The EA completes signal bars on the first tick at/after their close (`OnTime`), the replay and Python on the next M1 bar. Both paths give identical ledgers (MQL5 and Python tests "tick path == M1 path").
+
+**Proxies (Section 5)**
+
+19. Order life: pending from placement until `breakout close + 12 × signal period`. Per tick a pending order is checked in the order: 21:30 → 12-bar expiry → fill → TP reached (`MISSED_TP_FIRST`).
+20. The round-trip commission of 5.3 is the TRE commission: the published FundedNext metals formula applied once to the opening price (LSR 1.7: "applied once … never doubled").
+21. The TP must also respect `SYMBOL_TRADE_STOPS_LEVEL` and lie beyond P; otherwise `INVALID_STOP_GEOMETRY` (conservative extension of 5.2).
+22. Exits are evaluated on the fill tick too (only the stop can trigger there). Precedence on one tick: SL > TP > 21:30 close (`BTB_ResolveExit`). With LIVE_NATIVE triggers (Bid for long, Ask for short) and SL < P < TP, SL and TP cannot both trigger on one tick; the rule is tested directly on `BTB_ResolveExit`.
+23. Gap exits: a tick more than 300 s after the proxy's previous tick → `GAP_SL`, `GAP_TP` or `GAP_SESSION_CLOSE`.
+24. Extra ledger states: `NOT_PLACED_END_OF_DATA` (breakout completed at the final flush) and `NOT_FILLED_END_OF_DATA` (pending when the data ends). Both are outside the analysis set.
+25. Quarantine (5.4 d) is applied when the ledger is written: a proxy whose life `[breakout open, end of life]` overlaps a quarantine window gets the state `IN_QUARANTINE` and leaves the analysis set. No real-time cancellation is simulated.
+26. `s0_pips` = whole points ÷ points per pip (0.30 → 3.0 pips, not 2.999…); the spread bucket uses it. The hour bucket is the breakout close hour (LSR buckets H00_08, H08_13, H13_17, H17_24).
+
+**Study (Section 6)**
+
+27. Events per cell = `EVENT` rows (quarantined ones excluded) with the window flag; fill rate = fills ÷ events; analysis set = `FILLED`/`FILLED_AT_PLACEMENT` with exit ≠ `END_OF_DATA`; independent days = distinct fill dates. Holm runs over all 48 cells; a cell without data has p = 1. Classification order: `INCONCLUSIVE_LOW_N` → `NEGATIVE` → `POSITIVE_EVIDENCE` → `OPEN`. Cost share of R = commission ÷ R + s0 × (profit per 1.0 price) ÷ R.
+
+**EA**
+
+28. `BTB_Expert` runs only in the Strategy Tester (init fails elsewhere). The LSR sizing, risk-admission and account-rule contracts are ported and tested but not used by the EA (roadmap 2: no admission gate). The EA exports `session_schedule.csv` (raw `SymbolInfoSessionTrade` intervals) and a `spread_pts` column in `bars_M1_BID.csv` for the Python reference and the replay. The spread sample of an M1 bar is the spread of the last usable tick before the tick that completes the bar.
+29. Every new library function has a test in `BTB_Tests.mq5`. The EA's own glue functions (`OnInit`, `OnTick`, package writing) are exercised only by the tester run; `CBtbFlow::Tick` in the tests reproduces `OnTick`'s order.
+
+**Step B: check first** (constructs not used in LSR, or not verifiable without MetaEditor)
+
+30. (a) `ScriptParameters=` in `config/btb_raw_audit.ini` (fallback in the Run Card); (b) `.set` files written as ASCII with `;` comments and epoch-second datetimes; (c) `ArraySort` on an `int` array (`BTB_MedianInt`); (d) `static` class methods taking `const TRE_Bar &` (`CBTB_LevelEngine::Crosses/Breaks`); (e) `((long)1) << 31` and long arithmetic in the test fixture; (f) calling a non-const virtual `Overlaps` through a reference parameter inside `const` methods (`WrittenStatus`, `WrittenState`); (g) date literals with seconds (`D'2026.01.07 10:04:59'`); (h) public data members named `from` / `to` in the test quarantine class; (i) any implicit `datetime`/`int` conversion warnings (target 0 warnings); (j) very long string concatenations in `CBTB_ProxyBook::CsvRow`.
 
 ---
 
@@ -341,3 +426,8 @@ Result: ...
 - Entry mode 1 (limit at the breakout close) only; M5 and M15; four level types; FULL and NY windows; R = 1, 2, 3; live-spread stop offset; full-net TP; late-spread block with the spread-normal resume rule; one tester pass for all 48 cells.
 - NY window confirmed by the owner as **16:30–21:30**.
 - Work split: Step A (cloud session writes code, pushes to `main`) → owner pulls → Step B (Cowork on the owner's machine installs, compiles, runs, reports).
+
+## 2026-09-29 — Step A: BTB-1..3 code complete (not compiled)
+- Engine ported from LSR `a6ad185` by rename only; rename verification PASS (empty diff).
+- BTB-1..3 written in MQL5 and in the independent Python reference; Python tests pass (36).
+- Closures 1–30 recorded in Section 11; Run Card `docs/BTB_RunCard.md` and Step B configs added.

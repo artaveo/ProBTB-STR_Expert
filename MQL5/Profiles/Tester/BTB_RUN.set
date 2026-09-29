@@ -1,0 +1,14 @@
+; BTB_Expert - every input at its roadmap default, ExperimentId=BTB-RUN
+; datetime inputs are epoch seconds: 1767225600 = 2026.01.01, 1782777600 = 2026.06.30 (inclusive end date)
+; fill CodeCommitSHA and RoadmapSHA256 before the run (Run Card section 5)
+InpExperimentId=BTB-RUN
+InpCodeCommitSHA=
+InpRoadmapSHA256=
+InpAuditRequestedStartDate=1767225600
+InpAuditRequestedEndDate=1782777600
+InpClosedMarketCalendarFile=
+InpDataQuarantineFile=
+InpStrategyPipSize=0.1
+InpCommissionRatePercent=0.0016
+InpCostScheduleDate=2026-09-28
+InpExportReferenceBars=true
