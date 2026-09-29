@@ -2,13 +2,19 @@
 
 Owner repository: `https://github.com/artaveo/ProBTB-STR_Expert` · owner folder `E:\Trade\ProBTB-STR_Expert` · commits go straight to `main` (no branches, no PRs).
 
-Status: **BTB-1, BTB-2 and BTB-3 are to be implemented, compiled, run and reported together in one session** (owner decision 2026-09-29). Nothing beyond BTB-3 is authorized. After BTB-3 the owner decides whether to continue.
+Status: **BTB-1, BTB-2 and BTB-3 are implemented together**, split between two sessions (owner decision 2026-09-29). Nothing beyond BTB-3 is authorized. After BTB-3 the owner decides whether to continue.
+
+| Step | Who | What |
+|---|---|---|
+| **A — Code** | Claude Code **cloud** session | Writes all code, tests, the Run Card and the tester/.set files for BTB-1..3; runs what can run without MT5 (Python tests, rename verification); commits to `main` of this repo and pushes. **It does not compile MQL5 or run MT5.** Section 8A |
+| (owner) | owner | `git pull` in `E:\Trade\ProBTB-STR_Expert` |
+| **B — Build and run** | **Cowork** session on the owner's machine | Installs into MT5, compiles, fixes compile/test failures, runs the tests, the audit and the single tester pass, reconciles, writes the report, commits the results. Section 8B |
 
 ---
 
 ## 0. How a new chat must start (read first)
 
-1. Work in a **local** Claude Code session on the owner's machine with folder `E:\Trade\ProBTB-STR_Expert`. MetaTrader, the tick cache and Python are there (Section 10). A cloud session cannot run MT5.
+1. Find your step in the table above and do only that step (Section 8A or 8B).
 2. Get the engine source from the previous project at an **exact commit**:
    ```
    git clone https://github.com/artaveo/Liquidity-Sweep-Reversal-STR_Expert <tmp>
@@ -69,6 +75,7 @@ Apply the inverse rename (`TRE`→`LSR`, `TickResearchEngine`→`LiquiditySweepR
 | `python/btb_reference/{__init__,levels,run_reference,study}.py` | Independent Python reference for the event ledgers (byte-identical) and the BTB-3 report |
 | `python/tests/test_btb_levels.py`, `test_btb_study.py` | Python blocking fixtures |
 | `docs/BTB_RunCard.md` | Exact tester settings, inputs and commands |
+| `config/btb_tests.ini`, `config/btb_tester.ini`, `MQL5/Profiles/Tester/BTB_RUN.set` | Ready-to-use startup/tester configs for Step B |
 | `research/btb_run/` | The run packet (Section 7) |
 
 Run packages are written to `Common\Files\BTB\<ExperimentId>\`. Test output: `Common\Files\BTB\tests\btb_tests.txt`.
@@ -240,36 +247,59 @@ Classification per cell (pre-registered):
 
 ---
 
-## 8. Phases (one session, in order; stop only on a blocking failure)
+## 8. Phases
 
-### BTB-1 — Engine port and contract
-- Clone at `a6ad185`, port with the rename rules and pass the rename verification (1.4).
-- Create the repo structure. Compile everything with 0 errors and 0 warnings.
-- `BTB_Tests` must pass with all ported TRE suites.
-- Run the raw tick audit and the EA's data audit on XAUUSD 2026 H1. The gate is `DATA-PASSED`; the ticks are already cached from LSR.
+The content of the three phases is the same regardless of who does it. The work is split between Step A (cloud, code) and Step B (Cowork, build and run).
 
-### BTB-2 — Levels and events
-- Implement Sections 3–4, with MQL5 test suites for:
-  - the window and resume rules;
-  - each level type;
-  - the breakout, open-beyond, consumption and cooldown rules;
-  - the event ID.
-- Add the Python reference and Python tests. Run the tester and reconcile the event ledgers byte-identically.
+### 8A — Step A: cloud session (code only)
 
-### BTB-3 — Proxies and report
-- Implement Sections 5–6, with MQL5 test suites for:
-  - the exact limit fill (Ask = P fills, Ask = P + 1 point does not);
-  - the spread-offset SL;
-  - the TP solve (net = k R exactly);
-  - the cancellation reasons, the stop-wins-on-same-tick rule and the 21:30 close.
-- Add the Python statistics tests: bootstrap determinism, Holm and classification.
-- Run the single tester pass for the final numbers. Write `research/btb_run/`: the report, the manifest, the ledgers (compressed if over 50 MB), the tester log and the inputs.
+The cloud session has no MetaTrader. **It writes code carefully and verifies it by reading.** Anything that needs MT5 is left to Step B.
 
-### Delivery (same session)
-1. Install `MQL5\...` into the MT5 data folder and compile there.
-2. Commit to `main` in `E:\Trade\ProBTB-STR_Expert` with a completion record per phase (Section 9). The owner pushes.
-3. Also produce a zip of all repository files with repo-relative paths, and tell the owner where it is.
-4. Give the owner a short Persian summary of the 16 groups × 3 R table and the classifications.
+1. **BTB-1 — engine port.** Clone the LSR repo at `a6ad185` and port it with the rename rules (1.1–1.3). Run the rename verification (1.4); it must produce an empty diff. Port the LSR Phase 1 test suites into `BTB_Tests.mq5`, and port `day_block_bootstrap_upper` with its tests.
+2. **BTB-2 — levels and events.** Implement Sections 3–4 in MQL5 plus the Python reference (`btb_reference/levels.py`), which reads the EA's M1 export and reproduces the event ledgers. MQL5 test suites must cover:
+   - the window and resume rules;
+   - each level type;
+   - the breakout, open-beyond, consumption and cooldown rules;
+   - the event ID.
+3. **BTB-3 — proxies and report.** Implement Sections 5–6 in MQL5 plus `btb_reference/study.py`. MQL5 test suites must cover:
+   - the exact limit fill (Ask = P fills, Ask = P + 1 point does not);
+   - the spread-offset SL;
+   - the TP solve (net = k R exactly);
+   - the cancellation reasons, the stop-wins-on-same-tick rule and the 21:30 close.
+   
+   Python tests must cover bootstrap determinism, Holm and the classification.
+4. **Run what can run without MT5.** All Python tests must pass. Also check the Python reference on a small synthetic M1 file created by the tests.
+5. **Write the Run Card** `docs/BTB_RunCard.md` and the ready files for Step B:
+   - `config/btb_tests.ini` (script startup);
+   - `config/btb_tester.ini` (Section 10 values);
+   - `MQL5/Profiles/Tester/BTB_RUN.set` (all defaults, `ExperimentId=BTB-RUN`);
+   - the exact Python commands.
+6. **MQL5 care**, since the code cannot be compiled here:
+   - Reuse the LSR idioms exactly: no `ZeroMemory` on structs with strings; explicit init; `#property strict` style as in LSR.
+   - Every new function must have a test in `BTB_Tests`.
+   - List any uncertainty (API calls not used before in LSR) in the Section 11 closures, so Step B checks those first.
+7. **Commit and push to `main`** of `github.com/artaveo/ProBTB-STR_Expert`. Do not use another branch or a PR. If the session cannot push to `main`, push a branch and say so clearly.
+   - Add a completion record `BTB-1..3 — CODE COMPLETE (not compiled)`.
+   - End with the message **"Step A done — owner: git pull, then start Step B."**
+
+### 8B — Step B: Cowork session on the owner's machine (build and run)
+
+Work in `E:\Trade\ProBTB-STR_Expert`, which the owner has already pulled. If the folder is missing, clone the repo there. Use Section 10 for all paths.
+
+1. **Install.** Copy the repo's `MQL5\...` into the MT5 data folder, and the `config\*.ini` files into the data folder's `config\`.
+2. **Compile** every `.mq5` with MetaEditor (CLI, one file at a time). The target is 0 errors and 0 warnings. If there are errors, fix them in the repo (not only in the MT5 copy), re-install and recompile. Record every fix in Section 11.
+3. **Run the tests.** Run `BTB_Tests` from `config\btb_tests.ini`; the result must be `RESULT: PASS ... failed=0`. Run the Python tests (`python -m unittest discover -s tests` from `python/`). Fix any failures in the repo.
+4. **Run the raw tick audit** on XAUUSD 2026 H1. It must end `DATA-PASSED`.
+5. **Run the tester once** via `config\btb_tester.ini`: XAUUSD, real ticks, 2026.01.01 → 2026.07.01. The ticks are already cached. If the connection drops, MT5 resumes by itself; do not close the terminal.
+6. **Reconcile and report.**
+   - `python -m btb_reference.run_reference <package>`: the event ledgers must be byte-identical.
+   - `python -m btb_reference.study <package>`: this writes the report.
+   - Copy the package to `research/btb_run/`, compressing the ledgers if they are over 50 MB.
+7. **Commit to `main`.** The commit includes the fixes, the research packet and the completion records `BTB-1/2/3 — COMPLETE` (Section 9) with the compile/test counts and results. The owner pushes.
+8. **Tell the owner in Persian:**
+   - the 16 groups × 3 R table with classifications;
+   - the mean spread and the fill rate;
+   - anything the owner must do, for example switch on Algo Trading after a terminal restart.
 
 ---
 
@@ -309,4 +339,5 @@ Result: ...
 - New strategy, new repository and folder; LSR frozen at its Phase 3 stage.
 - Engine taken from LSR `a6ad185` and renamed to TRE (strategy-neutral).
 - Entry mode 1 (limit at the breakout close) only; M5 and M15; four level types; FULL and NY windows; R = 1, 2, 3; live-spread stop offset; full-net TP; late-spread block with the spread-normal resume rule; one tester pass for all 48 cells.
-- The owner wrote the NY window once as 18:30; it is taken as **16:30–21:30** (the LSR NY window, stated twice by the owner). Change only on the owner's instruction.
+- NY window confirmed by the owner as **16:30–21:30**.
+- Work split: Step A (cloud session writes code, pushes to `main`) → owner pulls → Step B (Cowork on the owner's machine installs, compiles, runs, reports).
